@@ -23,6 +23,16 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState("home");
   const [globalPins, setGlobalPins] = useState<UserPin[]>([]);
 
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      const tab = urlParams.get('tab');
+      if (tab) {
+        setActiveTab(tab);
+      }
+    }
+  }, []);
+
   const renderContent = () => {
     switch (activeTab) {
       case "home":

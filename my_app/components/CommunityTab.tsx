@@ -2,90 +2,9 @@
 import React, { useState } from "react";
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
-import { Heart, Stethoscope, MapPin, Syringe, Search, Filter } from "lucide-react";
-
-const ADOPTION_PETS = [
-  {
-    id: 1,
-    name: "Bella",
-    type: "Dog",
-    breed: "Labrador Retriever Mix",
-    age: "2 years",
-    health: "Vaccinated, Spayed",
-    image: "/pet1.png",
-    bio: "Bella is a sweet and energetic girl who loves to play fetch and go on long walks. She's great with kids and other dogs."
-  },
-  {
-    id: 2,
-    name: "Oliver",
-    type: "Cat",
-    breed: "Domestic Shorthair",
-    age: "1 year",
-    health: "Vaccinated, Neutered",
-    image: "/pet2.png",
-    bio: "Oliver is a cuddle bug who enjoys lounging in sunny spots and chasing laser pointers. Perfect companion for a quiet home."
-  },
-  {
-    id: 3,
-    name: "Luna",
-    type: "Dog",
-    breed: "German Shepherd",
-    age: "3 months",
-    health: "1st Shots, Dewormed",
-    image: "/pet1.png", // reusing for demo
-    bio: "Luna is a smart pup ready for training. She is very curious and needs an active family to keep her engaged."
-  }
-];
-
-const TREATMENT_POSTS = [
-  {
-    id: 1,
-    ngo: "Paws Rescue Center",
-    location: "Downtown Clinic (2 miles away)",
-    petName: "Max",
-    issue: "Needs emergency orthopedic surgery for a broken leg.",
-    urgency: "High",
-    raised: 450,
-    goal: 1200,
-    image: "/pet2.png" // reusing for demo
-  },
-  {
-    id: 2,
-    ngo: "Hope Animal Shelter",
-    location: "Westside Branch (5 miles away)",
-    petName: "Daisy",
-    issue: "Requires ongoing treatment for severe skin infection and malnutrition.",
-    urgency: "Medium",
-    raised: 120,
-    goal: 500,
-    image: "/pet1.png"
-  }
-];
-
-const BREEDING_PETS = [
-  {
-    id: 1,
-    name: "Apollo",
-    type: "Dog",
-    breed: "Siberian Husky",
-    age: "3 years",
-    gender: "Male",
-    pedigree: "AKC Registered",
-    image: "/pet1.png",
-    bio: "Champion bloodline Husky looking for a suitable mate. Fully health tested."
-  },
-  {
-    id: 2,
-    name: "Cleo",
-    type: "Cat",
-    breed: "Persian",
-    age: "2 years",
-    gender: "Female",
-    pedigree: "CFA Registered",
-    image: "/pet2.png",
-    bio: "Purebred Persian, very affectionate. Up to date on all vaccinations."
-  }
-];
+import { Heart, Stethoscope, MapPin, Syringe, Search, Filter, Share2 } from "lucide-react";
+import { PETS_DATA, Pet } from "@/lib/data";
+import PetDetail from "./PetDetail";
 
 export default function CommunityTab() {
   const [activeTab, setActiveTab] = useState<"adoption" | "treatment" | "breeding">("adoption");
@@ -94,24 +13,45 @@ export default function CommunityTab() {
 
   const [breedSearchQuery, setBreedSearchQuery] = useState("");
   const [genderFilter, setGenderFilter] = useState("Any");
+  
+  const [selectedPet, setSelectedPet] = useState<Pet | null>(null);
+
+  const ADOPTION_PETS = PETS_DATA.filter(p => p.type === "adoption");
+  const TREATMENT_POSTS = PETS_DATA.filter(p => p.type === "treatment");
+  const BREEDING_PETS = PETS_DATA.filter(p => p.type === "breeding");
 
   const filteredBreedingPets = BREEDING_PETS.filter(pet => {
-    const matchesSearch = pet.breed.toLowerCase().includes(breedSearchQuery.toLowerCase());
+    const matchesSearch = pet.breed?.toLowerCase().includes(breedSearchQuery.toLowerCase());
     const matchesGender = genderFilter === "Any" || pet.gender === genderFilter;
     return matchesSearch && matchesGender;
   });
 
   const filteredAdoptionPets = ADOPTION_PETS.filter(pet => {
-    const matchesSearch = pet.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          pet.breed.toLowerCase().includes(searchQuery.toLowerCase());
+    const nameMatch = pet.name?.toLowerCase().includes(searchQuery.toLowerCase());
+    const breedMatch = pet.breed?.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch = nameMatch || breedMatch;
+    
     let matchesAge = true;
-    if (ageFilter === "Puppy/Kitten") {
+    if (ageFilter === "Puppy/Kitten" && pet.age) {
       matchesAge = pet.age.includes("months") || pet.age.includes("weeks");
-    } else if (ageFilter === "Adult") {
+    } else if (ageFilter === "Adult" && pet.age) {
       matchesAge = pet.age.includes("year");
     }
     return matchesSearch && matchesAge;
   });
+
+  const handleShare = (e: React.MouseEvent, pet: Pet) => {
+    e.stopPropagation();
+    const petUrl = `${window.location.origin}/pet/${pet.id}`;
+    const name = pet.name || pet.petName;
+    const text = `Check out ${name} on PawSense!\n\n${petUrl}`;
+    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(text)}`;
+    window.open(whatsappUrl, '_blank');
+  };
+
+  if (selectedPet) {
+    return <PetDetail pet={selectedPet} onBack={() => setSelectedPet(null)} />;
+  }
 
   return (
     <div className="pt-8 px-4 animate-fade-in">
@@ -178,7 +118,11 @@ export default function CommunityTab() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredAdoptionPets.map((pet) => (
-            <Card key={pet.id} className="overflow-hidden flex flex-col hover:shadow-level-2 transition-shadow">
+            <Card 
+              key={pet.id} 
+              className="overflow-hidden flex flex-col hover:shadow-level-2 transition-shadow cursor-pointer"
+              onClick={() => setSelectedPet(pet)}
+            >
               <div className="aspect-[4/3] bg-surface-container-low relative">
                 <img src={pet.image} alt={pet.name} className="w-full h-full object-cover" />
                 <div className="absolute top-2 right-2 bg-background/80 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-primary flex items-center gap-1">
@@ -191,17 +135,32 @@ export default function CommunityTab() {
                     <h3 className="text-xl font-bold text-on-surface">{pet.name}</h3>
                     <p className="text-sm text-on-surface-variant">{pet.breed} • {pet.age}</p>
                   </div>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-8 w-8 text-on-surface-variant hover:text-primary hover:bg-primary/10 rounded-full"
+                    onClick={(e) => handleShare(e, pet)}
+                    title="Share"
+                  >
+                    <Share2 size={16} />
+                  </Button>
                 </div>
                 <div className="bg-surface-container-lowest p-3 rounded-xl mb-4 border border-surface-container/50">
                   <p className="text-xs font-medium text-on-surface flex items-center gap-2 mb-1">
                     <Syringe size={14} className="text-primary" /> {pet.health}
                   </p>
                 </div>
-                <p className="text-sm text-on-surface-variant leading-relaxed mb-6 flex-1">
+                <p className="text-sm text-on-surface-variant leading-relaxed mb-6 flex-1 line-clamp-2">
                   {pet.bio}
                 </p>
-                <Button className="w-full mt-auto rounded-full font-bold shadow-level-1 hover:shadow-level-2 transition-all">
-                  Apply for Adoption
+                <Button 
+                  className="w-full mt-auto rounded-full font-bold shadow-level-1 transition-all"
+                  onClick={(e) => {
+                    e.stopPropagation(); // prevent card click
+                    setSelectedPet(pet);
+                  }}
+                >
+                  View Details
                 </Button>
               </div>
             </Card>
@@ -218,7 +177,11 @@ export default function CommunityTab() {
       {activeTab === "treatment" && (
         <div className="max-w-3xl mx-auto space-y-6">
           {TREATMENT_POSTS.map((post) => (
-            <Card key={post.id} className="overflow-hidden flex flex-col md:flex-row hover:shadow-level-2 transition-shadow border-surface-container">
+            <Card 
+              key={post.id} 
+              className="overflow-hidden flex flex-col md:flex-row hover:shadow-level-2 transition-shadow border-surface-container cursor-pointer"
+              onClick={() => setSelectedPet(post)}
+            >
               <div className="md:w-1/3 aspect-video md:aspect-auto bg-surface-container-low relative">
                  <img src={post.image} alt={post.petName} className="w-full h-full object-cover" />
                  <div className={`absolute top-2 left-2 px-2 py-1 rounded text-xs font-bold ${
@@ -230,16 +193,27 @@ export default function CommunityTab() {
               <div className="p-6 md:w-2/3 flex flex-col">
                 <div className="flex justify-between items-start mb-2">
                   <h3 className="text-lg font-bold text-on-surface">Help {post.petName}</h3>
-                  <span className="text-xs font-bold text-secondary bg-secondary/10 px-2 py-1 rounded">
-                    {post.ngo}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-secondary bg-secondary/10 px-2 py-1 rounded">
+                      {post.ngo}
+                    </span>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-8 w-8 text-on-surface-variant hover:text-secondary hover:bg-secondary/10 rounded-full"
+                      onClick={(e) => handleShare(e, post)}
+                      title="Share"
+                    >
+                      <Share2 size={16} />
+                    </Button>
+                  </div>
                 </div>
                 <p className="text-sm text-on-surface-variant flex items-center gap-1 mb-4">
                   <MapPin size={14} /> {post.location}
                 </p>
                 <div className="bg-surface-container-lowest p-3 rounded-xl mb-4 border border-surface-container/50 flex gap-3 items-start">
                   <Stethoscope size={20} className="text-error shrink-0 mt-0.5" />
-                  <p className="text-sm text-on-surface">{post.issue}</p>
+                  <p className="text-sm text-on-surface line-clamp-2">{post.issue}</p>
                 </div>
                 
                 <div className="mt-auto">
@@ -250,11 +224,18 @@ export default function CommunityTab() {
                   <div className="w-full bg-surface-container rounded-full h-2 mb-4">
                     <div 
                       className="bg-primary h-2 rounded-full" 
-                      style={{ width: `${Math.min((post.raised / post.goal) * 100, 100)}%` }}
+                      style={{ width: `${Math.min(((post.raised ?? 0) / (post.goal ?? 1)) * 100, 100)}%` }}
                     ></div>
                   </div>
-                  <Button variant="secondary" className="w-full rounded-full font-bold shadow-level-1">
-                    Donate for Treatment
+                  <Button 
+                    variant="secondary" 
+                    className="w-full rounded-full font-bold shadow-level-1"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedPet(post);
+                    }}
+                  >
+                    View Details
                   </Button>
                 </div>
               </div>
@@ -291,7 +272,11 @@ export default function CommunityTab() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredBreedingPets.map((pet) => (
-            <Card key={pet.id} className="overflow-hidden flex flex-col hover:shadow-level-2 transition-shadow border-t-4 border-t-tertiary">
+            <Card 
+              key={pet.id} 
+              className="overflow-hidden flex flex-col hover:shadow-level-2 transition-shadow border-t-4 border-t-tertiary cursor-pointer"
+              onClick={() => setSelectedPet(pet)}
+            >
               <div className="aspect-[4/3] bg-surface-container-low relative">
                 <img src={pet.image} alt={pet.name} className="w-full h-full object-cover" />
                 <div className="absolute top-2 right-2 bg-background/80 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-tertiary flex items-center gap-1">
@@ -304,18 +289,36 @@ export default function CommunityTab() {
                     <h3 className="text-xl font-bold text-on-surface">{pet.name}</h3>
                     <p className="text-sm text-on-surface-variant">{pet.breed} • {pet.age}</p>
                   </div>
-                  <span className="text-xs font-bold px-2 py-1 bg-surface-container rounded-full">{pet.gender}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold px-2 py-1 bg-surface-container rounded-full">{pet.gender}</span>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-8 w-8 text-on-surface-variant hover:text-tertiary hover:bg-tertiary/10 rounded-full"
+                      onClick={(e) => handleShare(e, pet)}
+                      title="Share"
+                    >
+                      <Share2 size={16} />
+                    </Button>
+                  </div>
                 </div>
                 <div className="bg-surface-container-lowest p-3 rounded-xl mb-4 border border-surface-container/50">
                   <p className="text-xs font-medium text-on-surface flex items-center gap-2 mb-1">
                     <Syringe size={14} className="text-tertiary" /> {pet.pedigree}
                   </p>
                 </div>
-                <p className="text-sm text-on-surface-variant leading-relaxed mb-6 flex-1">
+                <p className="text-sm text-on-surface-variant leading-relaxed mb-6 flex-1 line-clamp-2">
                   {pet.bio}
                 </p>
-                <Button variant="outline" className="w-full mt-auto rounded-full font-bold hover:bg-tertiary/10 hover:text-tertiary transition-all border-tertiary text-tertiary">
-                  Send Breeding Request
+                <Button 
+                  variant="outline" 
+                  className="w-full mt-auto rounded-full font-bold hover:bg-tertiary/10 hover:text-tertiary transition-all border-tertiary text-tertiary"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedPet(pet);
+                  }}
+                >
+                  View Details
                 </Button>
               </div>
             </Card>
