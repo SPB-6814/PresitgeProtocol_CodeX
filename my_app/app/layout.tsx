@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
+import "leaflet/dist/leaflet.css";
+import "./MapStyles.css";
 
 const plusJakartaSans = Plus_Jakarta_Sans({ 
   subsets: ["latin"],
