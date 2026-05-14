@@ -18,6 +18,8 @@ export default function HomeFeed({ onAddPin }: HomeFeedProps) {
   const [postLocation, setPostLocation] = useState<{lat: number, lng: number, address: string} | null>(null);
   const [isLocationPickerOpen, setIsLocationPickerOpen] = useState(false);
   const [postImage, setPostImage] = useState<string | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const fetchPosts = async () => {
@@ -74,23 +76,45 @@ export default function HomeFeed({ onAddPin }: HomeFeedProps) {
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      setImageFile(file);
       const imageUrl = URL.createObjectURL(file);
       setPostImage(imageUrl);
     }
   };
 
+
   const handleUpload = async () => {
     if (!newPostText) return;
     
     try {
+      setLoading(true);
+      let finalImageData = "https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?auto=format&fit=crop&q=80&w=800";
+
+      // 1. Convert image to Base64 if exists
+      if (imageFile) {
+        const reader = new FileReader();
+        const base64Promise = new Promise<string>((resolve, reject) => {
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = (error) => reject(error);
+          reader.readAsDataURL(imageFile);
+        });
+        finalImageData = await base64Promise;
+      }
+
+      // 2. Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+
+      // 3. Insert post with embedded image data
       const { data, error } = await supabase
         .from('posts')
         .insert([
           {
             caption: newPostText,
-            image_url: postImage || "https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?auto=format&fit=crop&q=80&w=800",
+            image_url: finalImageData, // This is now the actual .jpg/.png data
             location: postLocation ? postLocation.address : null,
-            // likes and mood columns not found in database schema yet
+            user_id: user?.id || null,
+            likes: 0,
+            mood: "Happy"
           }
         ])
         .select();
@@ -110,19 +134,18 @@ export default function HomeFeed({ onAddPin }: HomeFeedProps) {
         setNewPostText("");
         setPostLocation(null);
         setPostImage(null);
-        fetchPosts(); // Refresh feed
+        setImageFile(null);
+        fetchPosts(); 
       }
     } catch (error: any) {
       console.error("Error creating post:", error);
-      if (error.code === '42501') {
-        alert("Failed to create post: Row-Level Security (RLS) is blocking this request. Please add a policy to allow inserts.");
-      } else if (error.code === 'PGRST204') {
-        alert("Failed to create post: Database schema mismatch. Please ensure 'likes' and 'mood' columns exist.");
-      } else {
-        alert(`Failed to create post: ${error.message || "Unknown error"}`);
-      }
+      alert(`Failed to create post: ${error.message || "Unknown error"}`);
+    } finally {
+      setLoading(false);
     }
   };
+
+
 
   return (
     <div className="max-w-[600px] mx-auto pt-8 px-4">

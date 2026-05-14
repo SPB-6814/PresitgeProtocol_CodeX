@@ -39,37 +39,54 @@ export default function PostCard({ post }: PostProps) {
 
   const handleLike = async () => {
     const newCount = isLiked ? likesCount - 1 : likesCount + 1;
+    const previousLikes = likesCount;
+    const previousIsLiked = isLiked;
+
+    // Optimistic UI update
     setLikesCount(newCount);
     setIsLiked(!isLiked);
 
-    // Skipping database update because 'likes' column is missing in current schema
-    // To fix: Run "ALTER TABLE posts ADD COLUMN likes INTEGER DEFAULT 0;" in Supabase SQL editor
+    try {
+      const { error } = await supabase
+        .from('posts')
+        .update({ likes: newCount })
+        .eq('id', post.id);
+
+      if (error) throw error;
+    } catch (error) {
+      console.error("Error updating likes:", error);
+      // Revert on error
+      setLikesCount(previousLikes);
+      setIsLiked(previousIsLiked);
+    }
   };
+
 
   const handleCommentSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newComment.trim()) return;
 
-    const { error } = await supabase
-      .from('comments')
-      .insert([
-        { 
-          post_id: post.id, 
-          content: newComment,
-        }
-      ]);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      const { error } = await supabase
+        .from('comments')
+        .insert([
+          { 
+            post_id: post.id, 
+            content: newComment,
+            user_id: user?.id || null // Include user_id if logged in
+          }
+        ]);
 
-    if (!error) {
+      if (error) throw error;
       setNewComment("");
-    } else {
+    } catch (error: any) {
       console.error("Error posting comment:", error);
-      if (error.code === '42501') {
-        alert("Comment failed: Row-Level Security (RLS) is blocking this request. Please add a policy for anonymous comments.");
-      } else {
-        alert(`Comment failed: ${error.message}`);
-      }
+      alert(`Comment failed: ${error.message}`);
     }
   };
+
 
   return (
     <Card className="overflow-hidden border-surface-container shadow-level-2">
@@ -144,9 +161,10 @@ export default function PostCard({ post }: PostProps) {
         </p>
         
         <p className="text-sm text-on-surface leading-relaxed">
-          <span className="font-bold mr-2">{post.profiles?.display_name}</span>
+          <span className="font-bold mr-2">{post.profiles?.display_name || "Pet Parent"}</span>
           {post.caption}
         </p>
+
 
         {/* Comment Section */}
         {showComments && (
@@ -154,10 +172,11 @@ export default function PostCard({ post }: PostProps) {
             <div className="space-y-3 mb-4 max-h-40 overflow-y-auto">
               {post.comments?.map((comment) => (
                 <div key={comment.id} className="flex gap-2 text-sm">
-                  <span className="font-bold whitespace-nowrap">{comment.profiles?.display_name}</span>
+                  <span className="font-bold whitespace-nowrap">{comment.profiles?.display_name || "Someone"}</span>
                   <span className="text-on-surface-variant">{comment.content}</span>
                 </div>
               ))}
+
               {(!post.comments || post.comments.length === 0) && (
                 <p className="text-xs text-on-surface-variant italic">No comments yet.</p>
               )}

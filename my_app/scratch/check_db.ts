@@ -1,28 +1,40 @@
+
 import { createClient } from '@supabase/supabase-js';
 import * as dotenv from 'dotenv';
-dotenv.config();
+import path from 'path';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-async function checkSchema() {
-  console.log("Checking posts table...");
-  const { data, error } = await supabase.from('posts').select('*').limit(1);
-  if (error) {
-    console.error("Error fetching posts:", error);
+if (!supabaseUrl || !supabaseKey) {
+  console.error('Missing Supabase env vars');
+  process.exit(1);
+}
+
+const supabase = createClient(supabaseUrl, supabaseKey);
+
+async function checkDb() {
+  console.log('Checking posts table...');
+  const { data: posts, error: postsError } = await supabase.from('posts').select('*').limit(5);
+  if (postsError) {
+    console.error('Error fetching posts:', postsError);
   } else {
-    console.log("Post data sample:", data);
+    console.log('Posts found:', posts?.length);
+    if (posts && posts.length > 0) {
+      console.log('Sample post columns:', Object.keys(posts[0]));
+      console.log('Sample post data:', posts[0]);
+    }
   }
 
-  console.log("Checking profiles table...");
-  const { data: profiles, error: pError } = await supabase.from('profiles').select('*').limit(1);
-  if (pError) {
-    console.error("Error fetching profiles:", pError);
+  console.log('\nChecking comments table...');
+  const { data: comments, error: commentsError } = await supabase.from('comments').select('*').limit(5);
+  if (commentsError) {
+    console.error('Error fetching comments:', commentsError);
   } else {
-    console.log("Profile data sample:", profiles);
+    console.log('Comments found:', comments?.length);
   }
 }
 
-checkSchema();
+checkDb();
