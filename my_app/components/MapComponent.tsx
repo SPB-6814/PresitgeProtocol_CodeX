@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
+import { UserPin } from "@/app/page";
 
 // Fix for default marker icons in Leaflet + React
 // We don't strictly need this if we use our custom icons, but it's good practice
@@ -96,7 +97,27 @@ function ResizeHandler() {
   return null;
 }
 
-export default function MapComponent() {
+// User Pin Icon
+const createUserIcon = () => {
+  const color = "#5b5fc7"; // Primary color
+  return L.divIcon({
+    className: "custom-div-icon",
+    html: `
+      <div class="marker-container">
+        <div class="marker-icon">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 2C8.13 2 5 5.13 5 9C5 14.25 12 22 12 22C12 22 19 14.25 19 9C19 5.13 15.87 2 12 2ZM12 11.5C10.62 11.5 9.5 10.38 9.5 9C9.5 7.62 10.62 6.5 12 6.5C13.38 6.5 14.5 7.62 14.5 9C14.5 10.38 13.38 11.5 12 11.5Z" fill="${color}" stroke="white" stroke-width="1.5"/>
+          </svg>
+        </div>
+        <div class="marker-label text-primary bg-primary/10">User Post</div>
+      </div>
+    `,
+    iconSize: [32, 42],
+    iconAnchor: [16, 42],
+  });
+};
+
+export default function MapComponent({ userPins = [] }: { userPins?: UserPin[] }) {
   useEffect(() => {
     fixLeafletIcons();
   }, []);
@@ -137,6 +158,24 @@ export default function MapComponent() {
               <button className="text-xs font-bold text-primary hover:underline">
                 View Details
               </button>
+            </div>
+          </Popup>
+        </Marker>
+      ))}
+
+      {userPins.map((pin) => (
+        <Marker 
+          key={pin.id} 
+          position={[pin.lat, pin.lng]} 
+          icon={createUserIcon()}
+        >
+          <Popup>
+            <div className="popup-content">
+              <span className="status-badge bg-primary/20 text-primary">
+                User Pin
+              </span>
+              <h3>{pin.name}</h3>
+              <p>{pin.description}</p>
             </div>
           </Popup>
         </Marker>

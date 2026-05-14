@@ -14,8 +14,13 @@ const MapComponent = dynamic(() => import("./MapComponent"), {
     </div>
   ),
 });
+import { UserPin } from "@/app/page";
 
-export default function RescueMap() {
+interface RescueMapProps {
+  userPins?: UserPin[];
+}
+
+export default function RescueMap({ userPins = [] }: RescueMapProps) {
   return (
     <section className="max-w-container mx-auto px-margin-mobile md:px-margin-desktop py-12">
       <div className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
@@ -41,7 +46,7 @@ export default function RescueMap() {
       </div>
 
       <Card className="overflow-hidden border-surface-container shadow-level-2 h-[600px]">
-        <MapComponent />
+        <MapComponent userPins={userPins} />
       </Card>
       
       <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">

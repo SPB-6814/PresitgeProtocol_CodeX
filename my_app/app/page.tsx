@@ -11,8 +11,17 @@ import ShopTab from "@/components/ShopTab";
 import HomeSidebar from "@/components/HomeSidebar";
 import HomeLeftSidebar from "@/components/HomeLeftSidebar";
 
+export interface UserPin {
+  id: string;
+  lat: number;
+  lng: number;
+  name: string;
+  description: string;
+}
+
 export default function Home() {
   const [activeTab, setActiveTab] = useState("home");
+  const [globalPins, setGlobalPins] = useState<UserPin[]>([]);
 
   const renderContent = () => {
     switch (activeTab) {
@@ -22,14 +31,14 @@ export default function Home() {
             <div className="flex justify-center gap-6 xl:gap-8 px-4 max-w-7xl mx-auto w-full relative items-start pt-6">
                <HomeLeftSidebar />
                <div className="w-full max-w-[600px] mt-0 xl:mt-0">
-                 <HomeFeed />
+                 <HomeFeed onAddPin={(pin) => setGlobalPins(prev => [...prev, pin])} />
                </div>
                <HomeSidebar setActiveTab={setActiveTab} />
             </div>
           </>
         );
       case "map":
-        return <RescueMap />;
+        return <RescueMap userPins={globalPins} />;
       case "wellness":
         return <WellnessTab />;
       case "community":

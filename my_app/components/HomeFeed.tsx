@@ -1,8 +1,10 @@
 "use client";
-import React, { useState } from "react";
-import { Camera, Heart, MessageCircle, Send, MoreHorizontal, Image as ImageIcon, MapPin } from "lucide-react";
+import React, { useState, useRef } from "react";
+import { Camera, Heart, MessageCircle, Send, MoreHorizontal, Image as ImageIcon, MapPin, X } from "lucide-react";
 import { Button } from "./ui/button";
 import { Card } from "./ui/card";
+import LocationPickerModal from "./LocationPickerModal";
+import { UserPin } from "@/app/page";
 
 const INITIAL_POSTS = [
   {
@@ -27,10 +29,25 @@ const INITIAL_POSTS = [
   }
 ];
 
-export default function HomeFeed() {
+interface HomeFeedProps {
+  onAddPin?: (pin: UserPin) => void;
+}
+
+export default function HomeFeed({ onAddPin }: HomeFeedProps) {
   const [posts, setPosts] = useState(INITIAL_POSTS);
   const [newPostText, setNewPostText] = useState("");
-  const [postLocation, setPostLocation] = useState("");
+  const [postLocation, setPostLocation] = useState<{lat: number, lng: number, address: string} | null>(null);
+  const [isLocationPickerOpen, setIsLocationPickerOpen] = useState(false);
+  const [postImage, setPostImage] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const imageUrl = URL.createObjectURL(file);
+      setPostImage(imageUrl);
+    }
+  };
 
   const handleUpload = () => {
     if (!newPostText) return;
@@ -38,15 +55,27 @@ export default function HomeFeed() {
       id: posts.length + 1,
       user: "You",
       avatar: "ME",
-      image: "/pet1.png", // Default for demo
+      image: postImage || "/pet1.png", // Use selected image or default
       caption: newPostText,
       likes: 0,
       time: "Just now",
-      location: postLocation
+      location: postLocation ? postLocation.address : ""
     };
+
+    if (postLocation && onAddPin) {
+      onAddPin({
+        id: `post-${newPost.id}`,
+        lat: postLocation.lat,
+        lng: postLocation.lng,
+        name: `Post by You`,
+        description: newPostText
+      });
+    }
+
     setPosts([newPost, ...posts]);
     setNewPostText("");
-    setPostLocation("");
+    setPostLocation(null);
+    setPostImage(null);
   };
 
   return (
@@ -64,9 +93,32 @@ export default function HomeFeed() {
               value={newPostText}
               onChange={(e) => setNewPostText(e.target.value)}
             />
+            {postImage && (
+              <div className="mt-2 relative w-24 h-24 rounded-lg overflow-hidden border border-surface-container shadow-sm">
+                <img src={postImage} alt="Preview" className="w-full h-full object-cover" />
+                <button 
+                  onClick={() => setPostImage(null)}
+                  className="absolute top-1 right-1 bg-surface-container-lowest/80 text-on-surface p-1 rounded-full hover:bg-error hover:text-on-error transition-colors backdrop-blur-sm"
+                >
+                  <X size={12} />
+                </button>
+              </div>
+            )}
             <div className="flex justify-between items-center mt-2 pt-2 border-t border-surface-container/50">
               <div className="flex gap-2">
-                <Button variant="ghost" size="sm" className="text-on-surface-variant hover:text-primary">
+                <input 
+                  type="file" 
+                  accept="image/*" 
+                  className="hidden" 
+                  ref={fileInputRef} 
+                  onChange={handleImageSelect}
+                />
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="text-on-surface-variant hover:text-primary"
+                  onClick={() => fileInputRef.current?.click()}
+                >
                   <ImageIcon size={20} className="mr-2" />
                   Photo
                 </Button>
@@ -78,10 +130,10 @@ export default function HomeFeed() {
                   variant="ghost" 
                   size="sm" 
                   className={`hover:text-primary ${postLocation ? 'text-primary bg-primary/10' : 'text-on-surface-variant'}`}
-                  onClick={() => setPostLocation(postLocation ? "" : "Goa Rescue Shelter")}
+                  onClick={() => setIsLocationPickerOpen(true)}
                 >
                   <MapPin size={20} className="mr-2" />
-                  {postLocation || "Location"}
+                  {postLocation ? "Location Added" : "Location"}
                 </Button>
               </div>
               <Button size="sm" onClick={handleUpload} disabled={!newPostText}>
@@ -151,6 +203,14 @@ export default function HomeFeed() {
           </Card>
         ))}
       </div>
+
+      <LocationPickerModal
+        isOpen={isLocationPickerOpen}
+        onClose={() => setIsLocationPickerOpen(false)}
+        onConfirm={(lat, lng, address) => {
+          setPostLocation({lat, lng, address});
+        }}
+      />
     </div>
   );
 }
