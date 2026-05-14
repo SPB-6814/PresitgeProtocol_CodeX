@@ -8,8 +8,6 @@ import HeroSection from "@/components/HeroSection";
 
 import CommunityTab from "@/components/CommunityTab";
 import ShopTab from "@/components/ShopTab";
-import HomeSidebar from "@/components/HomeSidebar";
-import HomeLeftSidebar from "@/components/HomeLeftSidebar";
 
 export interface UserPin {
   id: string;
@@ -39,11 +37,9 @@ export default function Home() {
         return (
           <>
             <div className="flex justify-center gap-6 xl:gap-8 px-4 max-w-7xl mx-auto w-full relative items-start pt-6">
-               <HomeLeftSidebar />
                <div className="w-full max-w-[600px] mt-0 xl:mt-0">
                  <HomeFeed onAddPin={(pin) => setGlobalPins(prev => [...prev, pin])} />
                </div>
-               <HomeSidebar setActiveTab={setActiveTab} />
             </div>
           </>
         );
