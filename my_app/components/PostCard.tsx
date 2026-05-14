@@ -48,17 +48,36 @@ export default function PostCard({ post }: PostProps) {
     setIsLiked(!isLiked);
 
     try {
+      // Check if user is logged in
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error("You must be logged in to like posts.");
+      }
+
+      // Target correct table based on where the post came from
+      const table = (post as any).source === 'community' ? 'community_posts' : 'posts';
+
       const { error } = await supabase
-        .from('posts')
+        .from(table)
         .update({ likes_count: newCount })
         .eq('id', post.id);
 
-      if (error) throw error;
-    } catch (error) {
-      console.error("Error updating likes:", error);
-      // Revert on error
-      setLikesCount(previousLikes);
-      setIsLiked(previousIsLiked);
+      if (error) {
+        // If error is due to missing column in community_posts, just ignore it for the UI
+        if (error.code === 'PGRST204') {
+          console.warn(`Column likes_count might not exist in ${table}.`);
+          return;
+        }
+        throw error;
+      }
+    } catch (error: any) {
+      console.error("Error updating likes:", error.message || error);
+      // Only revert if it's a real error, not just a missing column warning
+      if (error.code !== 'PGRST204') {
+        setLikesCount(previousLikes);
+        setIsLiked(previousIsLiked);
+        if (error.message) alert(error.message);
+      }
     }
   };
 

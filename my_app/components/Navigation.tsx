@@ -14,6 +14,7 @@ interface NavigationProps {
 export default function Navigation({ activeTab, setActiveTab }: NavigationProps) {
   const [user, setUser] = React.useState<any>(null);
   const [profile, setProfile] = React.useState<any>(null);
+  const [pets, setPets] = React.useState<any[]>([]);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   React.useEffect(() => {
@@ -28,6 +29,14 @@ export default function Navigation({ activeTab, setActiveTab }: NavigationProps)
           .eq('id', user.id)
           .single();
         setProfile(profile);
+
+        // Fetch user's first pet for dropdown status
+        const { data: petsData } = await supabase
+          .from('my_pets')
+          .select('*')
+          .eq('user_id', user.id)
+          .limit(1);
+        setPets(petsData || []);
       }
     };
 
@@ -43,9 +52,17 @@ export default function Navigation({ activeTab, setActiveTab }: NavigationProps)
           .eq('id', session.user.id)
           .single();
         setProfile(profile);
+
+        const { data: petsData } = await supabase
+          .from('my_pets')
+          .select('*')
+          .eq('user_id', session.user.id)
+          .limit(1);
+        setPets(petsData || []);
       } else {
         setUser(null);
         setProfile(null);
+        setPets([]);
         setIsLoggedIn(false);
       }
     });
@@ -142,7 +159,9 @@ export default function Navigation({ activeTab, setActiveTab }: NavigationProps)
                     <PawPrint size={16} className="text-primary" />
                     <div className="text-left">
                       <span className="block font-medium">My Pet</span>
-                      <span className="block text-[10px] text-on-surface-variant leading-tight">Buddy • Golden Retriever</span>
+                      <span className="block text-[10px] text-on-surface-variant leading-tight">
+                        {pets.length > 0 ? `${pets[0].name} • ${pets[0].breed}` : "No pets added"}
+                      </span>
                     </div>
                   </button>
                   

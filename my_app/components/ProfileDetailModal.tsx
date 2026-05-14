@@ -3,6 +3,8 @@ import React from "react";
 import { X, PawPrint, User, Calendar, CreditCard, Heart } from "lucide-react";
 import { Button } from "./ui/button";
 
+import MyPetsManager from "./MyPetsManager";
+
 export type ProfileDetailType = "my_pet" | "health_vault" | "calendar" | "finances" | "breeding_requests" | null;
 
 interface ProfileDetailModalProps {
@@ -17,29 +19,7 @@ export default function ProfileDetailModal({ isOpen, onClose, type }: ProfileDet
   const renderContent = () => {
     switch (type) {
       case "my_pet":
-        return (
-          <div className="space-y-4">
-            <div className="flex items-center gap-4 border-b border-surface-container/50 pb-4">
-              <div className="w-16 h-16 rounded-full bg-surface-container-low overflow-hidden">
-                <img src="/pet1.png" alt="Buddy" className="w-full h-full object-cover" />
-              </div>
-              <div>
-                <h3 className="text-xl font-bold text-on-surface">Buddy</h3>
-                <p className="text-sm text-on-surface-variant">Golden Retriever • 2 Years</p>
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div className="bg-surface-container-lowest border border-surface-container/50 p-3 rounded-xl">
-                <span className="block text-on-surface-variant text-xs mb-1">Weight</span>
-                <span className="font-bold text-on-surface">65 lbs</span>
-              </div>
-              <div className="bg-surface-container-lowest border border-surface-container/50 p-3 rounded-xl">
-                <span className="block text-on-surface-variant text-xs mb-1">Diet</span>
-                <span className="font-bold text-on-surface">Grain-Free Kibble</span>
-              </div>
-            </div>
-          </div>
-        );
+        return <MyPetsManager />;
       case "health_vault":
         return (
           <div className="space-y-4">
@@ -132,7 +112,7 @@ export default function ProfileDetailModal({ isOpen, onClose, type }: ProfileDet
 
   return (
     <div className="fixed inset-0 z-[110] flex items-center justify-center bg-background/80 backdrop-blur-sm p-4">
-      <div className="bg-surface-container-lowest w-full max-w-sm rounded-3xl shadow-level-2 overflow-hidden relative animate-in fade-in zoom-in-95 duration-200 border border-surface-container/50">
+      <div className="bg-surface-container-lowest w-full max-w-2xl rounded-3xl shadow-level-2 overflow-hidden relative animate-in fade-in zoom-in-95 duration-200 border border-surface-container/50">
         <button 
           onClick={onClose}
           className="absolute top-4 right-4 p-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-container rounded-full transition-colors z-10"
