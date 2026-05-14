@@ -14,6 +14,7 @@ export default function Navigation({ activeTab, setActiveTab }: NavigationProps)
     { id: "map", label: "Map" },
     { id: "wellness", label: "Wellness" },
     { id: "community", label: "Community" },
+    { id: "shop", label: "Shop" },
   ];
 
   return (
