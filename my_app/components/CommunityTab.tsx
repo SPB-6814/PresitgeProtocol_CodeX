@@ -11,7 +11,7 @@ import AuthModal from "./AuthModal";
 import { Loader2 } from "lucide-react";
 
 export default function CommunityTab() {
-  const [activeTab, setActiveTab] = useState<"adoption" | "treatment" | "breeding">("adoption");
+  const [activeTab, setActiveTab] = useState<"adoption" | "treatment" | "breeding" | "stray_report">("adoption");
   const [searchQuery, setSearchQuery] = useState("");
   const [ageFilter, setAgeFilter] = useState("All");
   const [breedSearchQuery, setBreedSearchQuery] = useState("");
@@ -45,7 +45,7 @@ export default function CommunityTab() {
       const mappedPets: Pet[] = (data || []).map(p => ({
         id: p.id,
         type: p.type as any,
-        name: p.name,
+        name: p.name || (p.type === 'stray_report' ? 'Unknown ' + p.breed : 'Pet'),
         petName: p.name,
         breed: p.breed,
         age: p.age,
@@ -56,7 +56,7 @@ export default function CommunityTab() {
         issue: p.issue || p.bio,
         pedigree: p.pedigree,
         location: p.location_tag,
-        urgency: p.urgency,
+        urgency: p.urgency || "Normal",
         raised: Number(p.raised_amount || 0),
         goal: Number(p.goal_amount || 0),
       }));
@@ -78,6 +78,7 @@ export default function CommunityTab() {
   const ADOPTION_PETS = ALL_PETS.filter(p => p.type === "adoption");
   const TREATMENT_POSTS = ALL_PETS.filter(p => p.type === "treatment");
   const BREEDING_PETS = ALL_PETS.filter(p => p.type === "breeding");
+  const STRAY_POSTS = ALL_PETS.filter(p => p.type === "stray_report");
 
   const filteredBreedingPets = BREEDING_PETS.filter(pet => {
     const matchesSearch = pet.breed?.toLowerCase().includes(breedSearchQuery.toLowerCase());
@@ -133,7 +134,7 @@ export default function CommunityTab() {
       )}
 
       {/* Inner Tabs */}
-      <div className="flex gap-4 justify-center mb-8">
+      <div className="flex flex-wrap gap-4 justify-center mb-8">
         <button
           onClick={() => setActiveTab("adoption")}
           className={`px-6 py-2 rounded-full font-bold transition-all ${
@@ -163,6 +164,16 @@ export default function CommunityTab() {
           }`}
         >
           Breeding
+        </button>
+        <button
+          onClick={() => setActiveTab("stray_report")}
+          className={`px-6 py-2 rounded-full font-bold transition-all ${
+            activeTab === "stray_report"
+              ? "bg-error text-on-error shadow-level-1"
+              : "bg-surface-container text-on-surface-variant hover:bg-surface-container-high"
+          }`}
+        >
+          Stray Sightings
         </button>
       </div>
 
@@ -419,6 +430,62 @@ export default function CommunityTab() {
           {filteredBreedingPets.length === 0 && (
             <div className="text-center py-12 text-on-surface-variant">
               No pets found matching your criteria.
+            </div>
+          )}
+        </>
+      )}
+
+      {activeTab === "stray_report" && (
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {STRAY_POSTS.map((pet) => (
+            <Card 
+              key={pet.id} 
+              className="overflow-hidden flex flex-col hover:shadow-level-2 transition-shadow cursor-pointer"
+              onClick={() => setSelectedPet(pet)}
+            >
+              <div className="aspect-[4/3] bg-surface-container-low relative">
+                <img src={pet.image} alt={pet.name} className="w-full h-full object-cover" />
+                <div className="absolute top-2 right-2 bg-error text-on-error px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1">
+                  <MapPin size={14} /> Sighting
+                </div>
+              </div>
+              <div className="p-5 flex-1 flex flex-col">
+                <div className="flex justify-between items-start mb-2">
+                  <div>
+                    <h3 className="text-xl font-bold text-on-surface">{pet.name}</h3>
+                    <p className="text-sm text-on-surface-variant">{pet.breed} • {pet.location}</p>
+                  </div>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-8 w-8 text-on-surface-variant hover:text-error hover:bg-error/10 rounded-full"
+                    onClick={(e) => handleShare(e, pet)}
+                    title="Share"
+                  >
+                    <Share2 size={16} />
+                  </Button>
+                </div>
+                <p className="text-sm text-on-surface-variant leading-relaxed mb-6 flex-1 line-clamp-3 italic">
+                  "{pet.bio}"
+                </p>
+                <Button 
+                  variant="outline"
+                  className="w-full mt-auto rounded-full font-bold border-error text-error hover:bg-error/10"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedPet(pet);
+                  }}
+                >
+                  View Details
+                </Button>
+              </div>
+            </Card>
+            ))}
+          </div>
+          {STRAY_POSTS.length === 0 && (
+            <div className="text-center py-12 text-on-surface-variant">
+              No sightings reported yet.
             </div>
           )}
         </>

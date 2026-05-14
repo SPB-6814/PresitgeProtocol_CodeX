@@ -47,7 +47,7 @@ export default function Home() {
           </>
         );
       case "map":
-        return <RescueMap userPins={globalPins} />;
+        return <RescueMap />;
       case "wellness":
         return <WellnessTab />;
       case "community":

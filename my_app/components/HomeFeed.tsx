@@ -112,17 +112,56 @@ export default function HomeFeed({ onAddPin }: HomeFeedProps) {
         finalImageData = await base64Promise;
       }
 
-      // 3. Insert post with embedded image data
+      if (!user) throw new Error("User not found");
+
+      let strayAnimalId = null;
+
+      // 3. If location exists, try to find a nearby stray first
+      if (postLocation) {
+        // Find strays within ~20m of this point
+        const { data: nearbyStrays } = await supabase.rpc('get_entities_in_radius', {
+          user_lat: postLocation.lat,
+          user_lng: postLocation.lng,
+          radius_meters: 20
+        });
+
+        const existingStray = nearbyStrays?.find((e: any) => e.type === 'stray');
+
+        if (existingStray) {
+          strayAnimalId = existingStray.id;
+        } else {
+          const { data: strayData, error: strayError } = await supabase
+            .from('stray_animals')
+            .insert([
+              {
+                animal_type: newPostText.toLowerCase().includes('cat') ? 'cat' : 'dog',
+                description: newPostText,
+                main_image_url: finalImageData,
+                location: `POINT(${postLocation.lng} ${postLocation.lat})`,
+                behavior_tags: ['needs_verification']
+              }
+            ])
+            .select()
+            .single();
+          
+          if (!strayError) strayAnimalId = strayData.id;
+        }
+      }
+
+      // 4. Insert post with link to stray animal
       const { data, error } = await supabase
         .from('posts')
         .insert([
           {
             caption: newPostText,
-            image_url: finalImageData, // This is now the actual .jpg/.png data
+            image_url: finalImageData,
             location: postLocation ? postLocation.address : null,
-            user_id: user?.id || null,
+            lat: postLocation ? postLocation.lat : null,
+            lng: postLocation ? postLocation.lng : null,
+            stray_animal_id: strayAnimalId,
+            user_id: user.id,
             likes: 0,
-            mood: "Happy"
+            mood: "Helpful"
           }
         ])
         .select();

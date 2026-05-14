@@ -4,6 +4,7 @@ import { X, Camera, Image as ImageIcon, Loader2, MapPin } from "lucide-react";
 import { Button } from "./ui/button";
 import { Card } from "./ui/card";
 import { supabase } from "@/lib/supabase";
+import LocationPickerModal from "./LocationPickerModal";
 
 interface CreateCommunityPostModalProps {
   isOpen: boolean;
@@ -24,6 +25,8 @@ export default function CreateCommunityPostModal({ isOpen, onClose, onSuccess }:
   const [location, setLocation] = useState("");
   const [image, setImage] = useState<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const [postLocation, setPostLocation] = useState<{lat: number, lng: number, address: string} | null>(null);
+  const [isLocationPickerOpen, setIsLocationPickerOpen] = useState(false);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -66,6 +69,42 @@ export default function CreateCommunityPostModal({ isOpen, onClose, onSuccess }:
         return;
       }
 
+      let strayAnimalId = null;
+
+      // Create/Link Stray Animal Entity for ANY post with a location
+      if (postLocation) {
+        // Try to find nearby first (duplicate prevention)
+        const { data: nearbyStrays } = await supabase.rpc('get_entities_in_radius', {
+          user_lat: postLocation.lat,
+          user_lng: postLocation.lng,
+          radius_meters: 50 // 50m radius for grouping
+        });
+
+        const existingStray = nearbyStrays?.find((e: any) => e.type === 'stray');
+
+        if (existingStray) {
+          strayAnimalId = existingStray.id;
+        } else {
+          const { data: strayData, error: strayError } = await supabase
+            .from('stray_animals')
+            .insert([
+              {
+                animal_type: (bio + breed).toLowerCase().includes('cat') ? 'cat' : 'dog',
+                name: name || "Unnamed Pet",
+                description: bio,
+                main_image_url: finalImageData,
+                location: `POINT(${postLocation.lng} ${postLocation.lat})`,
+                behavior_tags: [healthStatus || type, type].filter(Boolean)
+              }
+            ])
+            .select()
+            .single();
+          
+          if (strayError) console.error("Map Entity Sync Error:", strayError);
+          if (strayData) strayAnimalId = strayData.id;
+        }
+      }
+
       const { error } = await supabase
         .from('community_posts')
         .insert([
@@ -79,8 +118,9 @@ export default function CreateCommunityPostModal({ isOpen, onClose, onSuccess }:
             bio,
             health_status: healthStatus,
             pedigree: type === "breeding" ? pedigree : null,
-            location_tag: location,
+            location_tag: postLocation ? postLocation.address : location,
             image_url: finalImageData,
+            stray_animal_id: strayAnimalId, // Link to map
           }
         ]);
 
@@ -110,7 +150,7 @@ export default function CreateCommunityPostModal({ isOpen, onClose, onSuccess }:
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           {/* Post Type Selection */}
           <div className="flex flex-wrap gap-2">
-            {(["adoption", "breeding", "treatment"] as const).map((t) => (
+            {(["adoption", "breeding", "treatment", "stray_report"] as const).map((t) => (
               <button
                 key={t}
                 type="button"
@@ -121,7 +161,7 @@ export default function CreateCommunityPostModal({ isOpen, onClose, onSuccess }:
                     : "bg-surface-container text-on-surface-variant hover:bg-surface-container-high"
                 }`}
               >
-                {t}
+                {t.replace('_', ' ')}
               </button>
             ))}
           </div>
@@ -211,10 +251,12 @@ export default function CreateCommunityPostModal({ isOpen, onClose, onSuccess }:
                 <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant" size={18} />
                 <input 
                   type="text" 
-                  placeholder="Where is the pet located?" 
-                  className="w-full pl-10 bg-surface-container-low border-none rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-primary/20 outline-none"
-                  value={location}
+                  placeholder="Select location on map..." 
+                  className="w-full pl-10 bg-surface-container-low border-none rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-primary/20 outline-none cursor-pointer"
+                  value={postLocation ? postLocation.address : location}
                   onChange={(e) => setLocation(e.target.value)}
+                  onClick={() => setIsLocationPickerOpen(true)}
+                  readOnly
                   required
                 />
               </div>
@@ -287,6 +329,15 @@ export default function CreateCommunityPostModal({ isOpen, onClose, onSuccess }:
           </div>
         </form>
       </Card>
+
+      <LocationPickerModal 
+        isOpen={isLocationPickerOpen}
+        onClose={() => setIsLocationPickerOpen(false)}
+        onConfirm={(lat, lng, address) => {
+          setPostLocation({lat, lng, address});
+          setIsLocationPickerOpen(false);
+        }}
+      />
     </div>
   );
 }
