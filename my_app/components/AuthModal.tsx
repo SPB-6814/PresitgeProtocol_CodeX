@@ -7,9 +7,10 @@ interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
   initialMode?: "login" | "signup";
+  onSuccess?: () => void;
 }
 
-export default function AuthModal({ isOpen, onClose, initialMode = "login" }: AuthModalProps) {
+export default function AuthModal({ isOpen, onClose, initialMode = "login", onSuccess }: AuthModalProps) {
   const [mode, setMode] = useState<"login" | "signup">(initialMode);
   
   if (!isOpen) return null;
@@ -83,7 +84,13 @@ export default function AuthModal({ isOpen, onClose, initialMode = "login" }: Au
               </div>
             )}
 
-            <Button className="w-full py-6 rounded-xl font-bold shadow-level-1 mt-2">
+            <Button 
+              className="w-full py-6 rounded-xl font-bold shadow-level-1 mt-2"
+              onClick={() => {
+                if (onSuccess) onSuccess();
+                onClose();
+              }}
+            >
               {mode === "login" ? "Log in" : "Sign up"}
             </Button>
           </div>
@@ -98,11 +105,23 @@ export default function AuthModal({ isOpen, onClose, initialMode = "login" }: Au
           </div>
 
           <div className="space-y-3">
-            <button className="w-full flex items-center justify-center gap-3 py-3 border border-surface-container rounded-xl hover:bg-surface-container transition-colors text-sm font-bold text-on-surface">
+            <button 
+              onClick={() => {
+                if (onSuccess) onSuccess();
+                onClose();
+              }}
+              className="w-full flex items-center justify-center gap-3 py-3 border border-surface-container rounded-xl hover:bg-surface-container transition-colors text-sm font-bold text-on-surface"
+            >
               <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" className="w-5 h-5" />
               Google
             </button>
-            <button className="w-full flex items-center justify-center gap-3 py-3 border border-surface-container rounded-xl hover:bg-surface-container transition-colors text-sm font-bold text-on-surface">
+            <button 
+              onClick={() => {
+                if (onSuccess) onSuccess();
+                onClose();
+              }}
+              className="w-full flex items-center justify-center gap-3 py-3 border border-surface-container rounded-xl hover:bg-surface-container transition-colors text-sm font-bold text-on-surface"
+            >
               <img src="https://www.svgrepo.com/show/448239/apple.svg" alt="Apple" className="w-5 h-5 opacity-80" />
               Apple
             </button>

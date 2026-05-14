@@ -62,10 +62,44 @@ const TREATMENT_POSTS = [
   }
 ];
 
+const BREEDING_PETS = [
+  {
+    id: 1,
+    name: "Apollo",
+    type: "Dog",
+    breed: "Siberian Husky",
+    age: "3 years",
+    gender: "Male",
+    pedigree: "AKC Registered",
+    image: "/pet1.png",
+    bio: "Champion bloodline Husky looking for a suitable mate. Fully health tested."
+  },
+  {
+    id: 2,
+    name: "Cleo",
+    type: "Cat",
+    breed: "Persian",
+    age: "2 years",
+    gender: "Female",
+    pedigree: "CFA Registered",
+    image: "/pet2.png",
+    bio: "Purebred Persian, very affectionate. Up to date on all vaccinations."
+  }
+];
+
 export default function CommunityTab() {
-  const [activeTab, setActiveTab] = useState<"adoption" | "treatment">("adoption");
+  const [activeTab, setActiveTab] = useState<"adoption" | "treatment" | "breeding">("adoption");
   const [searchQuery, setSearchQuery] = useState("");
   const [ageFilter, setAgeFilter] = useState("All");
+
+  const [breedSearchQuery, setBreedSearchQuery] = useState("");
+  const [genderFilter, setGenderFilter] = useState("Any");
+
+  const filteredBreedingPets = BREEDING_PETS.filter(pet => {
+    const matchesSearch = pet.breed.toLowerCase().includes(breedSearchQuery.toLowerCase());
+    const matchesGender = genderFilter === "Any" || pet.gender === genderFilter;
+    return matchesSearch && matchesGender;
+  });
 
   const filteredAdoptionPets = ADOPTION_PETS.filter(pet => {
     const matchesSearch = pet.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
@@ -102,6 +136,16 @@ export default function CommunityTab() {
           }`}
         >
           Treatment (NGOs)
+        </button>
+        <button
+          onClick={() => setActiveTab("breeding")}
+          className={`px-6 py-2 rounded-full font-bold transition-all ${
+            activeTab === "breeding"
+              ? "bg-tertiary text-on-tertiary shadow-level-1"
+              : "bg-surface-container text-on-surface-variant hover:bg-surface-container-high"
+          }`}
+        >
+          Breeding
         </button>
       </div>
 
@@ -217,6 +261,72 @@ export default function CommunityTab() {
             </Card>
           ))}
         </div>
+      )}
+
+      {activeTab === "breeding" && (
+        <>
+          <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
+            <div className="relative w-full sm:w-72">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant" size={18} />
+              <input 
+                type="text" 
+                placeholder="Search by breed..." 
+                value={breedSearchQuery}
+                onChange={(e) => setBreedSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 rounded-full border border-surface-container bg-surface-container-lowest focus:outline-none focus:border-tertiary text-sm"
+              />
+            </div>
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <Filter size={18} className="text-on-surface-variant" />
+              <select 
+                value={genderFilter}
+                onChange={(e) => setGenderFilter(e.target.value)}
+                className="flex-1 sm:w-auto py-2 px-4 rounded-full border border-surface-container bg-surface-container-lowest focus:outline-none focus:border-tertiary text-sm cursor-pointer"
+              >
+                <option value="Any">Any Gender</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+              </select>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredBreedingPets.map((pet) => (
+            <Card key={pet.id} className="overflow-hidden flex flex-col hover:shadow-level-2 transition-shadow border-t-4 border-t-tertiary">
+              <div className="aspect-[4/3] bg-surface-container-low relative">
+                <img src={pet.image} alt={pet.name} className="w-full h-full object-cover" />
+                <div className="absolute top-2 right-2 bg-background/80 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-tertiary flex items-center gap-1">
+                  <Heart size={14} /> Breeding Match
+                </div>
+              </div>
+              <div className="p-5 flex-1 flex flex-col">
+                <div className="flex justify-between items-start mb-2">
+                  <div>
+                    <h3 className="text-xl font-bold text-on-surface">{pet.name}</h3>
+                    <p className="text-sm text-on-surface-variant">{pet.breed} • {pet.age}</p>
+                  </div>
+                  <span className="text-xs font-bold px-2 py-1 bg-surface-container rounded-full">{pet.gender}</span>
+                </div>
+                <div className="bg-surface-container-lowest p-3 rounded-xl mb-4 border border-surface-container/50">
+                  <p className="text-xs font-medium text-on-surface flex items-center gap-2 mb-1">
+                    <Syringe size={14} className="text-tertiary" /> {pet.pedigree}
+                  </p>
+                </div>
+                <p className="text-sm text-on-surface-variant leading-relaxed mb-6 flex-1">
+                  {pet.bio}
+                </p>
+                <Button variant="outline" className="w-full mt-auto rounded-full font-bold hover:bg-tertiary/10 hover:text-tertiary transition-all border-tertiary text-tertiary">
+                  Send Breeding Request
+                </Button>
+              </div>
+            </Card>
+            ))}
+          </div>
+          {filteredBreedingPets.length === 0 && (
+            <div className="text-center py-12 text-on-surface-variant">
+              No pets found matching your criteria.
+            </div>
+          )}
+        </>
       )}
     </div>
   );

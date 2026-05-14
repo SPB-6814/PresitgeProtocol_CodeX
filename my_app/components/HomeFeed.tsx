@@ -1,6 +1,6 @@
 "use client";
 import React, { useState } from "react";
-import { Camera, Heart, MessageCircle, Send, MoreHorizontal, Image as ImageIcon } from "lucide-react";
+import { Camera, Heart, MessageCircle, Send, MoreHorizontal, Image as ImageIcon, MapPin } from "lucide-react";
 import { Button } from "./ui/button";
 import { Card } from "./ui/card";
 
@@ -12,7 +12,8 @@ const INITIAL_POSTS = [
     image: "/pet1.png",
     caption: "Meet Cooper! He just had his first vaccination today. Such a brave boy! 🐾 #GoldenRetriever #PuppyLife",
     likes: 124,
-    time: "2 hours ago"
+    time: "2 hours ago",
+    location: "Downtown Clinic"
   },
   {
     id: 2,
@@ -21,13 +22,15 @@ const INITIAL_POSTS = [
     image: "/pet2.png",
     caption: "Mochi found her favorite spot in the house. Who can resist that face? 🐱✨",
     likes: 89,
-    time: "5 hours ago"
+    time: "5 hours ago",
+    location: ""
   }
 ];
 
 export default function HomeFeed() {
   const [posts, setPosts] = useState(INITIAL_POSTS);
   const [newPostText, setNewPostText] = useState("");
+  const [postLocation, setPostLocation] = useState("");
 
   const handleUpload = () => {
     if (!newPostText) return;
@@ -38,10 +41,12 @@ export default function HomeFeed() {
       image: "/pet1.png", // Default for demo
       caption: newPostText,
       likes: 0,
-      time: "Just now"
+      time: "Just now",
+      location: postLocation
     };
     setPosts([newPost, ...posts]);
     setNewPostText("");
+    setPostLocation("");
   };
 
   return (
@@ -69,6 +74,15 @@ export default function HomeFeed() {
                   <Camera size={20} className="mr-2" />
                   Camera
                 </Button>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className={`hover:text-primary ${postLocation ? 'text-primary bg-primary/10' : 'text-on-surface-variant'}`}
+                  onClick={() => setPostLocation(postLocation ? "" : "Goa Rescue Shelter")}
+                >
+                  <MapPin size={20} className="mr-2" />
+                  {postLocation || "Location"}
+                </Button>
               </div>
               <Button size="sm" onClick={handleUpload} disabled={!newPostText}>
                 Post
@@ -90,7 +104,17 @@ export default function HomeFeed() {
                 </div>
                 <div>
                   <p className="text-sm font-bold text-on-surface">{post.user}</p>
-                  <p className="text-[10px] text-on-surface-variant">{post.time}</p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-[10px] text-on-surface-variant">{post.time}</p>
+                    {post.location && (
+                      <>
+                        <span className="text-[10px] text-on-surface-variant">•</span>
+                        <p className="text-[10px] text-primary flex items-center gap-0.5 font-medium">
+                          <MapPin size={10} /> {post.location}
+                        </p>
+                      </>
+                    )}
+                  </div>
                 </div>
               </div>
               <Button variant="ghost" size="icon" className="h-8 w-8">

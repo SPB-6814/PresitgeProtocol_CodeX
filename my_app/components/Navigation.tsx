@@ -1,8 +1,9 @@
 "use client";
 import React, { useState } from "react";
-import { PawPrint } from "lucide-react";
+import { PawPrint, User, Calendar, CreditCard, ChevronDown, LogOut } from "lucide-react";
 import { Button } from "./ui/button";
 import AuthModal from "./AuthModal";
+import ProfileDetailModal, { ProfileDetailType } from "./ProfileDetailModal";
 
 interface NavigationProps {
   activeTab: string;
@@ -20,6 +21,16 @@ export default function Navigation({ activeTab, setActiveTab }: NavigationProps)
 
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [authMode, setAuthMode] = useState<"login" | "signup">("login");
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [detailModalType, setDetailModalType] = useState<ProfileDetailType>(null);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+
+  const openProfileDetail = (type: ProfileDetailType) => {
+    setDetailModalType(type);
+    setIsDetailModalOpen(true);
+    setIsProfileOpen(false); // Close dropdown when opening modal
+  };
 
   const openAuth = (mode: "login" | "signup") => {
     setAuthMode(mode);
@@ -53,26 +64,116 @@ export default function Navigation({ activeTab, setActiveTab }: NavigationProps)
             </button>
           ))}
         </nav>
-        <div className="flex gap-4 items-center">
-          <Button 
-            variant="ghost" 
-            className="hidden md:inline-flex h-10 px-4"
-            onClick={() => openAuth("login")}
-          >
-            Log in
-          </Button>
-          <Button 
-            size="sm"
-            onClick={() => openAuth("signup")}
-          >
-            Get Started
-          </Button>
+        <div className="flex gap-4 items-center relative">
+          {isLoggedIn ? (
+            <div>
+              <button 
+                onClick={() => setIsProfileOpen(!isProfileOpen)}
+                className="flex items-center gap-2 hover:bg-surface-container py-1 px-2 rounded-full transition-colors"
+              >
+                <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold">
+                  JS
+                </div>
+                <ChevronDown size={16} className="text-on-surface-variant" />
+              </button>
+
+              {isProfileOpen && (
+                <div className="absolute right-0 top-full mt-2 w-56 bg-surface-container-lowest border border-surface-container shadow-level-2 rounded-2xl overflow-hidden py-2 animate-in fade-in slide-in-from-top-2 duration-200">
+                  <div className="px-4 py-2 border-b border-surface-container/50 mb-1">
+                    <p className="text-sm font-bold text-on-surface">John Smith</p>
+                    <p className="text-xs text-on-surface-variant">john@example.com</p>
+                  </div>
+                  
+                  <button 
+                    onClick={() => openProfileDetail("my_pet")}
+                    className="w-full text-left px-4 py-2 text-sm text-on-surface hover:bg-surface-container flex items-center gap-3 transition-colors"
+                  >
+                    <PawPrint size={16} className="text-primary" />
+                    <div className="text-left">
+                      <span className="block font-medium">My Pet</span>
+                      <span className="block text-[10px] text-on-surface-variant leading-tight">Buddy • Golden Retriever</span>
+                    </div>
+                  </button>
+                  
+                  <button 
+                    onClick={() => openProfileDetail("health_vault")}
+                    className="w-full text-left px-4 py-2 text-sm text-on-surface hover:bg-surface-container flex items-center gap-3 transition-colors"
+                  >
+                    <User size={16} className="text-secondary" />
+                    Health Vault
+                  </button>
+                  
+                  <button 
+                    onClick={() => openProfileDetail("calendar")}
+                    className="w-full text-left px-4 py-2 text-sm text-on-surface hover:bg-surface-container flex items-center gap-3 transition-colors"
+                  >
+                    <Calendar size={16} className="text-tertiary" />
+                    Calendar (Schedules)
+                  </button>
+                  
+                  <button 
+                    onClick={() => openProfileDetail("finances")}
+                    className="w-full text-left px-4 py-2 text-sm text-on-surface hover:bg-surface-container flex items-center gap-3 transition-colors"
+                  >
+                    <CreditCard size={16} className="text-on-surface-variant" />
+                    Finances (Orders)
+                  </button>
+
+                  <button 
+                    onClick={() => openProfileDetail("breeding_requests")}
+                    className="w-full text-left px-4 py-2 text-sm text-on-surface hover:bg-surface-container flex items-center gap-3 transition-colors"
+                  >
+                    <div className="relative">
+                      <Heart size={16} className="text-error" />
+                      <div className="absolute -top-1 -right-1 w-2 h-2 bg-error rounded-full"></div>
+                    </div>
+                    Breeding Requests
+                  </button>
+
+                  <div className="border-t border-surface-container/50 mt-1 pt-1">
+                    <button 
+                      onClick={() => {
+                        setIsLoggedIn(false);
+                        setIsProfileOpen(false);
+                      }}
+                      className="w-full text-left px-4 py-2 text-sm text-error hover:bg-error/10 flex items-center gap-3 transition-colors"
+                    >
+                      <LogOut size={16} />
+                      Log out
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <>
+              <Button 
+                variant="ghost" 
+                className="hidden md:inline-flex h-10 px-4"
+                onClick={() => openAuth("login")}
+              >
+                Log in
+              </Button>
+              <Button 
+                size="sm"
+                onClick={() => openAuth("signup")}
+              >
+                Get Started
+              </Button>
+            </>
+          )}
         </div>
       </div>
       <AuthModal 
         isOpen={isAuthModalOpen} 
         onClose={() => setIsAuthModalOpen(false)} 
         initialMode={authMode}
+        onSuccess={() => setIsLoggedIn(true)}
+      />
+      <ProfileDetailModal
+        isOpen={isDetailModalOpen}
+        onClose={() => setIsDetailModalOpen(false)}
+        type={detailModalType}
       />
     </header>
   );
