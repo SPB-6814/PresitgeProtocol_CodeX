@@ -56,9 +56,17 @@ export default function Home() {
     }
   };
 
+  const handleTabChange = (tab: string) => {
+    if (tab === "ngo") {
+      window.location.href = "/ngo";
+    } else {
+      setActiveTab(tab);
+    }
+  };
+
   return (
     <main className="min-h-screen bg-background">
-      <Navigation activeTab={activeTab} setActiveTab={setActiveTab} />
+      <Navigation activeTab={activeTab} setActiveTab={handleTabChange} />
       <div className="max-w-container mx-auto pb-20">
         {renderContent()}
       </div>

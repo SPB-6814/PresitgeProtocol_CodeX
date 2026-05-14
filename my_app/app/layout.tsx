@@ -4,6 +4,8 @@ import "./globals.css";
 import "leaflet/dist/leaflet.css";
 import "./MapStyles.css";
 
+import ClientWrapper from "@/components/ClientWrapper";
+
 const plusJakartaSans = Plus_Jakarta_Sans({ 
   subsets: ["latin"],
   variable: "--font-plus-jakarta",
@@ -22,7 +24,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${plusJakartaSans.variable} font-sans`}>{children}</body>
+      <body className={`${plusJakartaSans.variable} font-sans`}>
+        <ClientWrapper>
+          {children}
+        </ClientWrapper>
+      </body>
     </html>
   );
 }

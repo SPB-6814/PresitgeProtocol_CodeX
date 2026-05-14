@@ -7,11 +7,12 @@ interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
   initialMode?: "login" | "signup";
-  onSuccess?: () => void;
+  onSuccess?: (role: "owner" | "ngo") => void;
 }
 
 export default function AuthModal({ isOpen, onClose, initialMode = "login", onSuccess }: AuthModalProps) {
   const [mode, setMode] = useState<"login" | "signup">(initialMode);
+  const [role, setRole] = useState<"owner" | "ngo">("owner");
   
   if (!isOpen) return null;
 
@@ -63,18 +64,17 @@ export default function AuthModal({ isOpen, onClose, initialMode = "login", onSu
               />
             </div>
 
-            {mode === "signup" && (
-              <div className="relative">
-                <Check className="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant" size={18} />
-                <select defaultValue="" className="w-full pl-10 pr-4 py-3 rounded-xl border border-surface-container bg-surface-container-lowest focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary text-sm transition-all text-on-surface-variant appearance-none cursor-pointer">
-                  <option value="" disabled>Select Primary Interest</option>
-                  <option value="adopt">Looking to Adopt</option>
-                  <option value="rescue">Volunteer / Rescuer</option>
-                  <option value="ngo">NGO / Shelter</option>
-                  <option value="owner">Pet Owner</option>
-                </select>
-              </div>
-            )}
+            <div className="relative">
+              <Check className="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant" size={18} />
+              <select 
+                value={role}
+                onChange={(e) => setRole(e.target.value as "owner" | "ngo")}
+                className="w-full pl-10 pr-4 py-3 rounded-xl border border-surface-container bg-surface-container-lowest focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary text-sm transition-all text-on-surface appearance-none cursor-pointer"
+              >
+                <option value="owner">Log in as Pet Owner</option>
+                <option value="ngo">Log in as NGO / Shelter</option>
+              </select>
+            </div>
 
             {mode === "login" && (
               <div className="flex justify-end">
@@ -87,7 +87,7 @@ export default function AuthModal({ isOpen, onClose, initialMode = "login", onSu
             <Button 
               className="w-full py-6 rounded-xl font-bold shadow-level-1 mt-2"
               onClick={() => {
-                if (onSuccess) onSuccess();
+                if (onSuccess) onSuccess(role);
                 onClose();
               }}
             >

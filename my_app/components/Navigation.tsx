@@ -1,6 +1,6 @@
 "use client";
 import React, { useState } from "react";
-import { PawPrint, User, Calendar, CreditCard, ChevronDown, LogOut } from "lucide-react";
+import { PawPrint, User, Calendar, CreditCard, ChevronDown, LogOut, Heart } from "lucide-react";
 import { Button } from "./ui/button";
 import AuthModal from "./AuthModal";
 import ProfileDetailModal, { ProfileDetailType } from "./ProfileDetailModal";
@@ -11,7 +11,59 @@ interface NavigationProps {
 }
 
 export default function Navigation({ activeTab, setActiveTab }: NavigationProps) {
-  const navItems = [
+  const [userRole, setUserRole] = useState<"owner" | "ngo" | null>(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("userRole") as "owner" | "ngo" | null;
+    }
+    return null;
+  });
+
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(() => {
+    if (typeof window !== "undefined") {
+      return !!localStorage.getItem("userRole");
+    }
+    return false;
+  });
+
+  React.useEffect(() => {
+    if (typeof window !== "undefined") {
+      const storedRole = localStorage.getItem("userRole") as "owner" | "ngo" | null;
+      if (storedRole) {
+        // Basic Route Protection
+        const pathname = window.location.pathname;
+        if (storedRole === "ngo" && pathname !== "/ngo") {
+          window.location.href = "/ngo";
+        } else if (storedRole === "owner" && pathname === "/ngo") {
+          window.location.href = "/";
+        }
+      }
+    }
+  }, []);
+
+  const handleLoginSuccess = (role: "owner" | "ngo") => {
+    setIsLoggedIn(true);
+    setUserRole(role);
+    localStorage.setItem("userRole", role);
+    if (role === "ngo") {
+      window.location.href = "/ngo";
+    } else {
+      window.location.href = "/";
+    }
+  };
+
+  const handleLogout = () => {
+    setIsLoggedIn(false);
+    setUserRole(null);
+    setIsProfileOpen(false);
+    localStorage.removeItem("userRole");
+    window.location.href = "/";
+  };
+
+  const navItems = userRole === "ngo" ? [
+    { id: "ngo", label: "NGO Portal" },
+    { id: "map", label: "Rescue Map" },
+    { id: "community", label: "Community" }
+  ] : [
     { id: "home", label: "Home" },
     { id: "map", label: "Map" },
     { id: "wellness", label: "Wellness" },
@@ -21,7 +73,7 @@ export default function Navigation({ activeTab, setActiveTab }: NavigationProps)
 
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [authMode, setAuthMode] = useState<"login" | "signup">("login");
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [detailModalType, setDetailModalType] = useState<ProfileDetailType>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
@@ -132,10 +184,7 @@ export default function Navigation({ activeTab, setActiveTab }: NavigationProps)
 
                   <div className="border-t border-surface-container/50 mt-1 pt-1">
                     <button 
-                      onClick={() => {
-                        setIsLoggedIn(false);
-                        setIsProfileOpen(false);
-                      }}
+                      onClick={handleLogout}
                       className="w-full text-left px-4 py-2 text-sm text-error hover:bg-error/10 flex items-center gap-3 transition-colors"
                     >
                       <LogOut size={16} />
@@ -168,7 +217,7 @@ export default function Navigation({ activeTab, setActiveTab }: NavigationProps)
         isOpen={isAuthModalOpen} 
         onClose={() => setIsAuthModalOpen(false)} 
         initialMode={authMode}
-        onSuccess={() => setIsLoggedIn(true)}
+        onSuccess={handleLoginSuccess}
       />
       <ProfileDetailModal
         isOpen={isDetailModalOpen}

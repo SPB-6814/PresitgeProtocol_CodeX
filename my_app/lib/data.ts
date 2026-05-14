@@ -1,6 +1,6 @@
 export interface Pet {
   id: string;
-  type: "adoption" | "treatment" | "breeding";
+  type: "adoption" | "treatment" | "breeding" | "stray_report";
   name?: string;
   petName?: string;
   breed?: string;
@@ -16,9 +16,49 @@ export interface Pet {
   urgency?: string;
   raised?: number;
   goal?: number;
+  reporterName?: string;
+  reportTime?: string;
 }
 
 export const PETS_DATA: Pet[] = [
+  // Stray Reports (for NGOs)
+  {
+    id: "stray_1",
+    type: "stray_report",
+    petName: "Unknown Dog",
+    breed: "Mixed",
+    issue: "Found limping near the highway, seems dehydrated.",
+    location: "Panaji Highway, Near Mall De Goa",
+    urgency: "High",
+    image: "/pet1.png", // reusing images for demo
+    reporterName: "Rahul Sharma",
+    reportTime: "10 mins ago"
+  },
+  {
+    id: "stray_2",
+    type: "stray_report",
+    petName: "Injured Cat",
+    breed: "Street Cat",
+    issue: "Has a severe eye infection, hiding under cars.",
+    location: "Mapusa Market",
+    urgency: "Medium",
+    image: "/pet2.png",
+    reporterName: "Anita Desai",
+    reportTime: "2 hours ago"
+  },
+  {
+    id: "stray_3",
+    type: "stray_report",
+    petName: "Puppy Litter",
+    breed: "Indie",
+    issue: "Litter of 4 puppies abandoned in a box. Need immediate shelter.",
+    location: "Margao Station Road",
+    urgency: "High",
+    image: "/pet1.png",
+    reporterName: "John D'Souza",
+    reportTime: "Just now"
+  },
+
   // Adoption
   {
     id: "adopt_1",
