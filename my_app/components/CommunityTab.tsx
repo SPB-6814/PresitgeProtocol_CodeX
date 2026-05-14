@@ -5,20 +5,79 @@ import { Button } from "./ui/button";
 import { Heart, Stethoscope, MapPin, Syringe, Search, Filter, Share2 } from "lucide-react";
 import { PETS_DATA, Pet } from "@/lib/data";
 import PetDetail from "./PetDetail";
+import { supabase } from "@/lib/supabase";
+import CreateCommunityPostModal from "./CreateCommunityPostModal";
+import AuthModal from "./AuthModal";
+import { Loader2 } from "lucide-react";
 
 export default function CommunityTab() {
   const [activeTab, setActiveTab] = useState<"adoption" | "treatment" | "breeding">("adoption");
   const [searchQuery, setSearchQuery] = useState("");
   const [ageFilter, setAgeFilter] = useState("All");
-
   const [breedSearchQuery, setBreedSearchQuery] = useState("");
   const [genderFilter, setGenderFilter] = useState("Any");
   
   const [selectedPet, setSelectedPet] = useState<Pet | null>(null);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [livePets, setLivePets] = useState<Pet[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
-  const ADOPTION_PETS = PETS_DATA.filter(p => p.type === "adoption");
-  const TREATMENT_POSTS = PETS_DATA.filter(p => p.type === "treatment");
-  const BREEDING_PETS = PETS_DATA.filter(p => p.type === "breeding");
+  const handlePostClick = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      setIsAuthModalOpen(true);
+    } else {
+      setIsCreateModalOpen(true);
+    }
+  };
+
+  const fetchCommunityPosts = async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('community_posts')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      const mappedPets: Pet[] = (data || []).map(p => ({
+        id: p.id,
+        type: p.type as any,
+        name: p.name,
+        petName: p.name,
+        breed: p.breed,
+        age: p.age,
+        gender: p.gender,
+        health: p.health_status,
+        image: p.image_url,
+        bio: p.bio,
+        issue: p.issue || p.bio,
+        pedigree: p.pedigree,
+        location: p.location_tag,
+        urgency: p.urgency,
+        raised: Number(p.raised_amount || 0),
+        goal: Number(p.goal_amount || 0),
+      }));
+
+      setLivePets(mappedPets);
+    } catch (error) {
+      console.error("Error fetching community posts:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  React.useEffect(() => {
+    fetchCommunityPosts();
+  }, []);
+
+  const ALL_PETS = [...livePets, ...PETS_DATA];
+
+  const ADOPTION_PETS = ALL_PETS.filter(p => p.type === "adoption");
+  const TREATMENT_POSTS = ALL_PETS.filter(p => p.type === "treatment");
+  const BREEDING_PETS = ALL_PETS.filter(p => p.type === "breeding");
 
   const filteredBreedingPets = BREEDING_PETS.filter(pet => {
     const matchesSearch = pet.breed?.toLowerCase().includes(breedSearchQuery.toLowerCase());
@@ -55,6 +114,24 @@ export default function CommunityTab() {
 
   return (
     <div className="pt-8 px-4 animate-fade-in">
+      {/* Header with Create Button */}
+      <div className="flex justify-between items-center mb-8">
+        <h2 className="text-2xl font-bold text-on-surface">Community Center</h2>
+        <Button 
+          className="rounded-full bg-primary text-on-primary shadow-level-2 hover:shadow-level-3 transition-all flex items-center gap-2"
+          onClick={handlePostClick}
+        >
+          <Share2 size={18} />
+          Post to Community
+        </Button>
+      </div>
+
+      {loading && livePets.length === 0 && (
+        <div className="flex justify-center py-12">
+          <Loader2 className="animate-spin text-primary" size={32} />
+        </div>
+      )}
+
       {/* Inner Tabs */}
       <div className="flex gap-4 justify-center mb-8">
         <button
@@ -132,7 +209,16 @@ export default function CommunityTab() {
               <div className="p-5 flex-1 flex flex-col">
                 <div className="flex justify-between items-start mb-2">
                   <div>
-                    <h3 className="text-xl font-bold text-on-surface">{pet.name}</h3>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-xl font-bold text-on-surface">{pet.name}</h3>
+                      {pet.gender && (
+                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
+                          pet.gender === 'Male' ? 'bg-blue-100 text-blue-700' : 'bg-pink-100 text-pink-700'
+                        }`}>
+                          {pet.gender}
+                        </span>
+                      )}
+                    </div>
                     <p className="text-sm text-on-surface-variant">{pet.breed} • {pet.age}</p>
                   </div>
                   <Button 
@@ -290,7 +376,13 @@ export default function CommunityTab() {
                     <p className="text-sm text-on-surface-variant">{pet.breed} • {pet.age}</p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold px-2 py-1 bg-surface-container rounded-full">{pet.gender}</span>
+                    {pet.gender && (
+                      <span className={`text-xs font-bold px-2 py-1 rounded-full ${
+                        pet.gender === 'Male' ? 'bg-blue-100 text-blue-700' : 'bg-pink-100 text-pink-700'
+                      }`}>
+                        {pet.gender}
+                      </span>
+                    )}
                     <Button 
                       variant="ghost" 
                       size="icon" 
@@ -331,6 +423,21 @@ export default function CommunityTab() {
           )}
         </>
       )}
+
+      <CreateCommunityPostModal 
+        isOpen={isCreateModalOpen} 
+        onClose={() => setIsCreateModalOpen(false)}
+        onSuccess={fetchCommunityPosts}
+      />
+
+      <AuthModal 
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        onSuccess={() => {
+          setIsAuthModalOpen(false);
+          setIsCreateModalOpen(true);
+        }}
+      />
     </div>
   );
 }

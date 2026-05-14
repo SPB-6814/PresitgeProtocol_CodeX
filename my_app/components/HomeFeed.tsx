@@ -6,6 +6,7 @@ import LocationPickerModal from "./LocationPickerModal";
 import { UserPin } from "@/app/page";
 import { supabase } from "@/lib/supabase";
 import PostCard from "./PostCard";
+import AuthModal from "./AuthModal";
 
 interface HomeFeedProps {
   onAddPin?: (pin: UserPin) => void;
@@ -19,6 +20,7 @@ export default function HomeFeed({ onAddPin }: HomeFeedProps) {
   const [isLocationPickerOpen, setIsLocationPickerOpen] = useState(false);
   const [postImage, setPostImage] = useState<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -88,6 +90,15 @@ export default function HomeFeed({ onAddPin }: HomeFeedProps) {
     
     try {
       setLoading(true);
+
+      // Check for user session
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        setIsAuthModalOpen(true);
+        setLoading(false);
+        return;
+      }
+
       let finalImageData = "https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?auto=format&fit=crop&q=80&w=800";
 
       // 1. Convert image to Base64 if exists
@@ -100,9 +111,6 @@ export default function HomeFeed({ onAddPin }: HomeFeedProps) {
         });
         finalImageData = await base64Promise;
       }
-
-      // 2. Get current user
-      const { data: { user } } = await supabase.auth.getUser();
 
       // 3. Insert post with embedded image data
       const { data, error } = await supabase
@@ -152,8 +160,8 @@ export default function HomeFeed({ onAddPin }: HomeFeedProps) {
       {/* Create Post */}
       <Card className="p-4 mb-8 border-surface-container shadow-level-1">
         <div className="flex gap-4 items-start">
-          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">
-            ME
+          <div className="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center text-on-surface-variant font-bold border border-surface-container">
+            <ImageIcon size={20} />
           </div>
           <div className="flex-1">
             <textarea
@@ -237,6 +245,15 @@ export default function HomeFeed({ onAddPin }: HomeFeedProps) {
         onClose={() => setIsLocationPickerOpen(false)}
         onConfirm={(lat, lng, address) => {
           setPostLocation({lat, lng, address});
+        }}
+      />
+
+      <AuthModal 
+        isOpen={isAuthModalOpen} 
+        onClose={() => setIsAuthModalOpen(false)} 
+        onSuccess={() => {
+          setIsAuthModalOpen(false);
+          // Optional: handleUpload could be called again, but better to let user click post again
         }}
       />
     </div>

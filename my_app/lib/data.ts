@@ -67,6 +67,7 @@ export const PETS_DATA: Pet[] = [
     breed: "Labrador Retriever Mix",
     age: "2 years",
     health: "Vaccinated, Spayed",
+    gender: "Female",
     image: "/pet1.png",
     bio: "Bella is a sweet and energetic girl who loves to play fetch and go on long walks. She's great with kids and other dogs."
   },
@@ -77,6 +78,7 @@ export const PETS_DATA: Pet[] = [
     breed: "Domestic Shorthair",
     age: "1 year",
     health: "Vaccinated, Neutered",
+    gender: "Male",
     image: "/pet2.png",
     bio: "Oliver is a cuddle bug who enjoys lounging in sunny spots and chasing laser pointers. Perfect companion for a quiet home."
   },
@@ -87,6 +89,7 @@ export const PETS_DATA: Pet[] = [
     breed: "German Shepherd",
     age: "3 months",
     health: "1st Shots, Dewormed",
+    gender: "Female",
     image: "/pet1.png",
     bio: "Luna is a smart pup ready for training. She is very curious and needs an active family to keep her engaged."
   },

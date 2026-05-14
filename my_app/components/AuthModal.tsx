@@ -1,40 +1,85 @@
-"use client";
 import React, { useState } from "react";
 import { Button } from "./ui/button";
-import { X, Mail, Lock, User, Github, Check } from "lucide-react"; // Using Github icon as a placeholder for OAuth if needed, or just text
+import { X, Mail, Lock, User, Check, Loader2 } from "lucide-react";
+import { supabase } from "@/lib/supabase";
 
 interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
   initialMode?: "login" | "signup";
-  onSuccess?: (role: "owner" | "ngo") => void;
+  onSuccess?: () => void;
 }
 
 export default function AuthModal({ isOpen, onClose, initialMode = "login", onSuccess }: AuthModalProps) {
   const [mode, setMode] = useState<"login" | "signup">(initialMode);
-  const [role, setRole] = useState<"owner" | "ngo">("owner");
+  const [loading, setLoading] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [error, setError] = useState<string | null>(null);
   
   if (!isOpen) return null;
 
+  const handleAuth = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+
+    try {
+      if (mode === "signup") {
+        const { error: signUpError } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: {
+              full_name: fullName,
+            }
+          }
+        });
+        if (signUpError) throw signUpError;
+        alert("Success! Please check your email to confirm your account.");
+      } else {
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+        if (signInError) throw signInError;
+      }
+
+      if (onSuccess) onSuccess();
+      onClose();
+    } catch (err: any) {
+      setError(err.message || "An authentication error occurred");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-background/80 backdrop-blur-sm p-4">
-      <div className="bg-surface-container-lowest w-full max-w-md rounded-3xl shadow-level-2 overflow-hidden relative animate-in fade-in zoom-in-95 duration-200">
+      <div className="bg-surface-container-lowest w-full max-w-md rounded-3xl shadow-level-5 overflow-hidden relative animate-in fade-in zoom-in-95 duration-200 border border-surface-container">
         <button 
           onClick={onClose}
-          className="absolute top-4 right-4 p-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-container rounded-full transition-colors"
+          className="absolute top-4 right-4 p-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-container rounded-full transition-colors z-10"
         >
           <X size={20} />
         </button>
 
-        <div className="p-8">
+        <form onSubmit={handleAuth} className="p-8">
           <h2 className="text-2xl font-bold text-on-surface mb-2 tracking-tight">
             {mode === "login" ? "Welcome back" : "Create an account"}
           </h2>
           <p className="text-sm text-on-surface-variant mb-6">
             {mode === "login" 
               ? "Enter your details to access your account." 
-              : "Join PawSense to start rescuing and adopting."}
+              : "Join the community to start rescuing and adopting."}
           </p>
+
+          {error && (
+            <div className="mb-4 p-3 rounded-lg bg-error/10 border border-error/20 text-error text-xs font-medium">
+              {error}
+            </div>
+          )}
 
           <div className="space-y-4">
             {mode === "signup" && (
@@ -43,7 +88,10 @@ export default function AuthModal({ isOpen, onClose, initialMode = "login", onSu
                 <input 
                   type="text" 
                   placeholder="Full Name" 
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
                   className="w-full pl-10 pr-4 py-3 rounded-xl border border-surface-container bg-surface-container-lowest focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary text-sm transition-all"
+                  required
                 />
               </div>
             )}
@@ -52,7 +100,10 @@ export default function AuthModal({ isOpen, onClose, initialMode = "login", onSu
               <input 
                 type="email" 
                 placeholder="Email Address" 
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 className="w-full pl-10 pr-4 py-3 rounded-xl border border-surface-container bg-surface-container-lowest focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary text-sm transition-all"
+                required
               />
             </div>
             <div className="relative">
@@ -60,83 +111,49 @@ export default function AuthModal({ isOpen, onClose, initialMode = "login", onSu
               <input 
                 type="password" 
                 placeholder="Password" 
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 className="w-full pl-10 pr-4 py-3 rounded-xl border border-surface-container bg-surface-container-lowest focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary text-sm transition-all"
+                required
               />
             </div>
 
-            <div className="relative">
-              <Check className="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant" size={18} />
-              <select 
-                value={role}
-                onChange={(e) => setRole(e.target.value as "owner" | "ngo")}
-                className="w-full pl-10 pr-4 py-3 rounded-xl border border-surface-container bg-surface-container-lowest focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary text-sm transition-all text-on-surface appearance-none cursor-pointer"
-              >
-                <option value="owner">Log in as Pet Owner</option>
-                <option value="ngo">Log in as NGO / Shelter</option>
-              </select>
-            </div>
-
-            {mode === "login" && (
-              <div className="flex justify-end">
-                <button className="text-xs font-bold text-primary hover:underline">
-                  Forgot password?
-                </button>
-              </div>
-            )}
-
             <Button 
+              type="submit"
+              disabled={loading}
               className="w-full py-6 rounded-xl font-bold shadow-level-1 mt-2"
-              onClick={() => {
-                if (onSuccess) onSuccess(role);
-                onClose();
-              }}
             >
-              {mode === "login" ? "Log in" : "Sign up"}
+              {loading ? (
+                <Loader2 className="animate-spin mr-2" size={18} />
+              ) : (
+                mode === "login" ? "Log in" : "Sign up"
+              )}
             </Button>
           </div>
 
-          <div className="mt-6 mb-6 relative text-center">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-surface-container"></div>
-            </div>
-            <span className="relative bg-surface-container-lowest px-4 text-xs font-medium text-on-surface-variant uppercase tracking-wider">
-              Or continue with
-            </span>
-          </div>
-
-          <div className="space-y-3">
-            <button 
-              onClick={() => {
-                if (onSuccess) onSuccess();
-                onClose();
-              }}
-              className="w-full flex items-center justify-center gap-3 py-3 border border-surface-container rounded-xl hover:bg-surface-container transition-colors text-sm font-bold text-on-surface"
-            >
-              <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" className="w-5 h-5" />
-              Google
-            </button>
-            <button 
-              onClick={() => {
-                if (onSuccess) onSuccess();
-                onClose();
-              }}
-              className="w-full flex items-center justify-center gap-3 py-3 border border-surface-container rounded-xl hover:bg-surface-container transition-colors text-sm font-bold text-on-surface"
-            >
-              <img src="https://www.svgrepo.com/show/448239/apple.svg" alt="Apple" className="w-5 h-5 opacity-80" />
-              Apple
-            </button>
-          </div>
+          <Button 
+            type="button"
+            variant="outline"
+            className="w-full py-6 rounded-xl font-bold border-surface-container text-on-surface-variant hover:bg-surface-container transition-all"
+            onClick={onClose}
+          >
+            Continue as Guest
+          </Button>
 
           <p className="mt-8 text-center text-sm text-on-surface-variant">
             {mode === "login" ? "Don't have an account? " : "Already have an account? "}
             <button 
-              onClick={() => setMode(mode === "login" ? "signup" : "login")}
+              type="button"
+              onClick={() => {
+                setMode(mode === "login" ? "signup" : "login");
+                setError(null);
+              }}
               className="font-bold text-primary hover:underline"
             >
               {mode === "login" ? "Sign up" : "Log in"}
             </button>
           </p>
-        </div>
+        </form>
       </div>
     </div>
   );

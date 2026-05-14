@@ -23,9 +23,10 @@ interface PostProps {
     caption: string;
     image_url: string;
     mood: string;
-    location?: string;
+    gender?: string;
+    location_tag?: string;
     created_at: string;
-    likes: number;
+    likes_count: number;
     profiles: Profile;
     comments: Comment[];
   };
@@ -34,7 +35,7 @@ interface PostProps {
 export default function PostCard({ post }: PostProps) {
   const [showComments, setShowComments] = useState(false);
   const [newComment, setNewComment] = useState("");
-  const [likesCount, setLikesCount] = useState(post.likes || 0);
+  const [likesCount, setLikesCount] = useState(post.likes_count || 0);
   const [isLiked, setIsLiked] = useState(false);
 
   const handleLike = async () => {
@@ -49,7 +50,7 @@ export default function PostCard({ post }: PostProps) {
     try {
       const { error } = await supabase
         .from('posts')
-        .update({ likes: newCount })
+        .update({ likes_count: newCount })
         .eq('id', post.id);
 
       if (error) throw error;
@@ -110,16 +111,23 @@ export default function PostCard({ post }: PostProps) {
                   Mood: {post.mood} 🐾
                 </span>
               )}
+              {post.gender && (
+                <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
+                  post.gender === 'Male' ? 'bg-blue-100 text-blue-700' : 'bg-pink-100 text-pink-700'
+                }`}>
+                  {post.gender}
+                </span>
+              )}
             </div>
             <div className="flex items-center gap-2">
               <p className="text-[10px] text-on-surface-variant">
                 {new Date(post.created_at).toLocaleDateString()}
               </p>
-              {post.location && (
+              {post.location_tag && (
                 <>
                   <span className="text-[10px] text-on-surface-variant">•</span>
                   <p className="text-[10px] text-primary flex items-center gap-0.5 font-medium">
-                    <MapPin size={10} /> {post.location}
+                    <MapPin size={10} /> {post.location_tag}
                   </p>
                 </>
               )}

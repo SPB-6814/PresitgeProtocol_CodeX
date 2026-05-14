@@ -8,6 +8,8 @@ import HeroSection from "@/components/HeroSection";
 
 import CommunityTab from "@/components/CommunityTab";
 import ShopTab from "@/components/ShopTab";
+import AuthModal from "@/components/AuthModal";
+import { supabase } from "@/lib/supabase";
 
 export interface UserPin {
   id: string;
@@ -20,15 +22,16 @@ export interface UserPin {
 export default function Home() {
   const [activeTab, setActiveTab] = useState("home");
   const [globalPins, setGlobalPins] = useState<UserPin[]>([]);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
   React.useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const urlParams = new URLSearchParams(window.location.search);
-      const tab = urlParams.get('tab');
-      if (tab) {
-        setActiveTab(tab);
+    const checkUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        setIsAuthModalOpen(true);
       }
-    }
+    };
+    checkUser();
   }, []);
 
   const renderContent = () => {
@@ -70,6 +73,10 @@ export default function Home() {
       <div className="max-w-container mx-auto pb-20">
         {renderContent()}
       </div>
+      <AuthModal 
+        isOpen={isAuthModalOpen} 
+        onClose={() => setIsAuthModalOpen(false)} 
+      />
     </main>
   );
 }

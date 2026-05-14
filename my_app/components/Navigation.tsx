@@ -4,6 +4,7 @@ import { PawPrint, User, Calendar, CreditCard, ChevronDown, LogOut, Heart } from
 import { Button } from "./ui/button";
 import AuthModal from "./AuthModal";
 import ProfileDetailModal, { ProfileDetailType } from "./ProfileDetailModal";
+import { supabase } from "@/lib/supabase";
 
 interface NavigationProps {
   activeTab: string;
@@ -11,59 +12,53 @@ interface NavigationProps {
 }
 
 export default function Navigation({ activeTab, setActiveTab }: NavigationProps) {
-  const [userRole, setUserRole] = useState<"owner" | "ngo" | null>(() => {
-    if (typeof window !== "undefined") {
-      return localStorage.getItem("userRole") as "owner" | "ngo" | null;
-    }
-    return null;
-  });
-
-  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(() => {
-    if (typeof window !== "undefined") {
-      return !!localStorage.getItem("userRole");
-    }
-    return false;
-  });
+  const [user, setUser] = React.useState<any>(null);
+  const [profile, setProfile] = React.useState<any>(null);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   React.useEffect(() => {
-    if (typeof window !== "undefined") {
-      const storedRole = localStorage.getItem("userRole") as "owner" | "ngo" | null;
-      if (storedRole) {
-        // Basic Route Protection
-        const pathname = window.location.pathname;
-        if (storedRole === "ngo" && pathname !== "/ngo") {
-          window.location.href = "/ngo";
-        } else if (storedRole === "owner" && pathname === "/ngo") {
-          window.location.href = "/";
-        }
+    const checkUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setUser(user);
+        setIsLoggedIn(true);
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+        setProfile(profile);
       }
-    }
+    };
+
+    checkUser();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (session) {
+        setUser(session.user);
+        setIsLoggedIn(true);
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', session.user.id)
+          .single();
+        setProfile(profile);
+      } else {
+        setUser(null);
+        setProfile(null);
+        setIsLoggedIn(false);
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
-  const handleLoginSuccess = (role: "owner" | "ngo") => {
-    setIsLoggedIn(true);
-    setUserRole(role);
-    localStorage.setItem("userRole", role);
-    if (role === "ngo") {
-      window.location.href = "/ngo";
-    } else {
-      window.location.href = "/";
-    }
-  };
-
-  const handleLogout = () => {
-    setIsLoggedIn(false);
-    setUserRole(null);
-    setIsProfileOpen(false);
-    localStorage.removeItem("userRole");
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
     window.location.href = "/";
   };
 
-  const navItems = userRole === "ngo" ? [
-    { id: "ngo", label: "NGO Portal" },
-    { id: "map", label: "Rescue Map" },
-    { id: "community", label: "Community" }
-  ] : [
+  const navItems = [
     { id: "home", label: "Home" },
     { id: "map", label: "Map" },
     { id: "wellness", label: "Wellness" },
@@ -123,8 +118,12 @@ export default function Navigation({ activeTab, setActiveTab }: NavigationProps)
                 onClick={() => setIsProfileOpen(!isProfileOpen)}
                 className="flex items-center gap-2 hover:bg-surface-container py-1 px-2 rounded-full transition-colors"
               >
-                <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold">
-                  JS
+                <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold overflow-hidden">
+                  {profile?.avatar_url ? (
+                    <img src={profile.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+                  ) : (
+                    profile?.display_name?.charAt(0) || "U"
+                  )}
                 </div>
                 <ChevronDown size={16} className="text-on-surface-variant" />
               </button>
@@ -132,8 +131,8 @@ export default function Navigation({ activeTab, setActiveTab }: NavigationProps)
               {isProfileOpen && (
                 <div className="absolute right-0 top-full mt-2 w-56 bg-surface-container-lowest border border-surface-container shadow-level-2 rounded-2xl overflow-hidden py-2 animate-in fade-in slide-in-from-top-2 duration-200">
                   <div className="px-4 py-2 border-b border-surface-container/50 mb-1">
-                    <p className="text-sm font-bold text-on-surface">John Smith</p>
-                    <p className="text-xs text-on-surface-variant">john@example.com</p>
+                    <p className="text-sm font-bold text-on-surface">{profile?.display_name || "User"}</p>
+                    <p className="text-xs text-on-surface-variant">{user?.email}</p>
                   </div>
                   
                   <button 
@@ -217,7 +216,7 @@ export default function Navigation({ activeTab, setActiveTab }: NavigationProps)
         isOpen={isAuthModalOpen} 
         onClose={() => setIsAuthModalOpen(false)} 
         initialMode={authMode}
-        onSuccess={handleLoginSuccess}
+        onSuccess={() => setIsAuthModalOpen(false)}
       />
       <ProfileDetailModal
         isOpen={isDetailModalOpen}
