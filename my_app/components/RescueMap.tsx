@@ -27,7 +27,10 @@ export default function RescueMap() {
             Real-time interactive tracking of stray reports and rescue centers across Goa.
           </p>
         </div>
-        <div className="flex gap-3">
+        <div className="flex gap-3 flex-wrap justify-end">
+          <Button variant="outline" className="bg-surface-container text-on-surface hover:bg-surface-container-high transition-colors">
+            Nearby Pet Hospitals
+          </Button>
           <Button variant="ghost" className="bg-surface-container">
             Filter District
           </Button>

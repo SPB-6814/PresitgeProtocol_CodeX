@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
-import { ShoppingCart, Star, Tag } from "lucide-react";
+import { ShoppingCart, Star, Tag, Search } from "lucide-react";
 
 const CATEGORIES = ["All", "Medicine", "Food", "Toys", "Accessories"];
 
@@ -67,10 +67,14 @@ const SHOP_ITEMS = [
 
 export default function ShopTab() {
   const [activeCategory, setActiveCategory] = useState("All");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [cartCount, setCartCount] = useState(0);
 
-  const filteredItems = activeCategory === "All" 
-    ? SHOP_ITEMS 
-    : SHOP_ITEMS.filter(item => item.category === activeCategory);
+  const filteredItems = SHOP_ITEMS.filter(item => {
+    const matchesCategory = activeCategory === "All" || item.category === activeCategory;
+    const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesCategory && matchesSearch;
+  });
 
   return (
     <div className="pt-8 px-4 animate-fade-in pb-12">
@@ -79,10 +83,22 @@ export default function ShopTab() {
           <h2 className="text-3xl font-bold text-on-surface tracking-tight mb-2">Pet Shop</h2>
           <p className="text-on-surface-variant">Everything your furry friend needs.</p>
         </div>
-        <Button variant="outline" className="hidden sm:flex gap-2">
-          <ShoppingCart size={18} />
-          Cart (0)
-        </Button>
+        <div className="flex gap-4">
+          <div className="relative hidden md:block">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant" size={18} />
+            <input 
+              type="text" 
+              placeholder="Search products..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 pr-4 py-2 rounded-full border border-surface-container bg-surface-container-lowest focus:outline-none focus:border-primary text-sm w-64"
+            />
+          </div>
+          <Button variant="outline" className="hidden sm:flex gap-2">
+            <ShoppingCart size={18} />
+            Cart ({cartCount})
+          </Button>
+        </div>
       </div>
 
       {/* Categories */}
@@ -127,7 +143,11 @@ export default function ShopTab() {
               </div>
               <div className="mt-auto flex items-center justify-between">
                 <span className="text-xl font-bold text-on-surface">${item.price.toFixed(2)}</span>
-                <Button size="sm" className="rounded-full shadow-sm hover:shadow-level-1">
+                <Button 
+                  size="sm" 
+                  className="rounded-full shadow-sm hover:shadow-level-1"
+                  onClick={() => setCartCount(prev => prev + 1)}
+                >
                   Add to Cart
                 </Button>
               </div>
@@ -137,8 +157,13 @@ export default function ShopTab() {
       </div>
       
       {/* Mobile Cart FAB */}
-      <Button className="sm:hidden fixed bottom-24 right-4 h-14 w-14 rounded-full shadow-level-2 flex items-center justify-center p-0">
+      <Button className="sm:hidden fixed bottom-24 right-4 h-14 w-14 rounded-full shadow-level-2 flex items-center justify-center p-0 relative">
         <ShoppingCart size={24} />
+        {cartCount > 0 && (
+          <div className="absolute -top-1 -right-1 bg-error text-on-error w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shadow-sm">
+            {cartCount}
+          </div>
+        )}
       </Button>
     </div>
   );

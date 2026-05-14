@@ -5,10 +5,11 @@ import HomeFeed from "@/components/HomeFeed";
 import RescueMap from "@/components/RescueMap";
 import WellnessTab from "@/components/WellnessTab";
 import HeroSection from "@/components/HeroSection";
-import TriageDashboard from "@/components/TriageDashboard";
+
 import CommunityTab from "@/components/CommunityTab";
 import ShopTab from "@/components/ShopTab";
 import HomeSidebar from "@/components/HomeSidebar";
+import HomeLeftSidebar from "@/components/HomeLeftSidebar";
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState("home");
@@ -18,15 +19,12 @@ export default function Home() {
       case "home":
         return (
           <>
-            <HeroSection />
-            <div className="flex justify-center gap-8 px-4 max-w-6xl mx-auto w-full relative items-start">
-               <div className="w-full max-w-[600px]">
+            <div className="flex justify-center gap-6 xl:gap-8 px-4 max-w-7xl mx-auto w-full relative items-start pt-6">
+               <HomeLeftSidebar />
+               <div className="w-full max-w-[600px] mt-0 xl:mt-0">
                  <HomeFeed />
                </div>
                <HomeSidebar setActiveTab={setActiveTab} />
-            </div>
-            <div className="mt-16">
-              <TriageDashboard />
             </div>
           </>
         );

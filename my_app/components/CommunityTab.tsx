@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
-import { Heart, Stethoscope, MapPin, Syringe } from "lucide-react";
+import { Heart, Stethoscope, MapPin, Syringe, Search, Filter } from "lucide-react";
 
 const ADOPTION_PETS = [
   {
@@ -64,6 +64,20 @@ const TREATMENT_POSTS = [
 
 export default function CommunityTab() {
   const [activeTab, setActiveTab] = useState<"adoption" | "treatment">("adoption");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [ageFilter, setAgeFilter] = useState("All");
+
+  const filteredAdoptionPets = ADOPTION_PETS.filter(pet => {
+    const matchesSearch = pet.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                          pet.breed.toLowerCase().includes(searchQuery.toLowerCase());
+    let matchesAge = true;
+    if (ageFilter === "Puppy/Kitten") {
+      matchesAge = pet.age.includes("months") || pet.age.includes("weeks");
+    } else if (ageFilter === "Adult") {
+      matchesAge = pet.age.includes("year");
+    }
+    return matchesSearch && matchesAge;
+  });
 
   return (
     <div className="pt-8 px-4 animate-fade-in">
@@ -93,8 +107,33 @@ export default function CommunityTab() {
 
       {/* Content */}
       {activeTab === "adoption" && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {ADOPTION_PETS.map((pet) => (
+        <>
+          <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
+            <div className="relative w-full sm:w-72">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant" size={18} />
+              <input 
+                type="text" 
+                placeholder="Search by name or breed..." 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 rounded-full border border-surface-container bg-surface-container-lowest focus:outline-none focus:border-primary text-sm"
+              />
+            </div>
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <Filter size={18} className="text-on-surface-variant" />
+              <select 
+                value={ageFilter}
+                onChange={(e) => setAgeFilter(e.target.value)}
+                className="flex-1 sm:w-auto py-2 px-4 rounded-full border border-surface-container bg-surface-container-lowest focus:outline-none focus:border-primary text-sm cursor-pointer"
+              >
+                <option value="All">All Ages</option>
+                <option value="Puppy/Kitten">Puppy / Kitten</option>
+                <option value="Adult">Adult</option>
+              </select>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredAdoptionPets.map((pet) => (
             <Card key={pet.id} className="overflow-hidden flex flex-col hover:shadow-level-2 transition-shadow">
               <div className="aspect-[4/3] bg-surface-container-low relative">
                 <img src={pet.image} alt={pet.name} className="w-full h-full object-cover" />
@@ -122,8 +161,14 @@ export default function CommunityTab() {
                 </Button>
               </div>
             </Card>
-          ))}
-        </div>
+            ))}
+          </div>
+          {filteredAdoptionPets.length === 0 && (
+            <div className="text-center py-12 text-on-surface-variant">
+              No pets found matching your criteria.
+            </div>
+          )}
+        </>
       )}
 
       {activeTab === "treatment" && (

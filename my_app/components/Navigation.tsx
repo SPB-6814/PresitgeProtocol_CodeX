@@ -1,7 +1,8 @@
 "use client";
-import React from "react";
+import React, { useState } from "react";
 import { PawPrint } from "lucide-react";
 import { Button } from "./ui/button";
+import AuthModal from "./AuthModal";
 
 interface NavigationProps {
   activeTab: string;
@@ -16,6 +17,14 @@ export default function Navigation({ activeTab, setActiveTab }: NavigationProps)
     { id: "community", label: "Community" },
     { id: "shop", label: "Shop" },
   ];
+
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [authMode, setAuthMode] = useState<"login" | "signup">("login");
+
+  const openAuth = (mode: "login" | "signup") => {
+    setAuthMode(mode);
+    setIsAuthModalOpen(true);
+  };
 
   return (
     <header className="sticky top-0 z-50 w-full bg-surface-container-lowest border-b border-surface-container/50 shadow-level-1/50">
@@ -45,12 +54,26 @@ export default function Navigation({ activeTab, setActiveTab }: NavigationProps)
           ))}
         </nav>
         <div className="flex gap-4 items-center">
-          <Button variant="ghost" className="hidden md:inline-flex h-10 px-4">
+          <Button 
+            variant="ghost" 
+            className="hidden md:inline-flex h-10 px-4"
+            onClick={() => openAuth("login")}
+          >
             Log in
           </Button>
-          <Button size="sm">Get Started</Button>
+          <Button 
+            size="sm"
+            onClick={() => openAuth("signup")}
+          >
+            Get Started
+          </Button>
         </div>
       </div>
+      <AuthModal 
+        isOpen={isAuthModalOpen} 
+        onClose={() => setIsAuthModalOpen(false)} 
+        initialMode={authMode}
+      />
     </header>
   );
 }
