@@ -1,45 +1,75 @@
-"use client";
-import React, { useState, useRef } from "react";
-import { Camera, Heart, MessageCircle, Send, MoreHorizontal, Image as ImageIcon, MapPin, X } from "lucide-react";
+import React, { useState, useRef, useEffect } from "react";
+import { Camera, Image as ImageIcon, MapPin, X, Loader2 } from "lucide-react";
 import { Button } from "./ui/button";
 import { Card } from "./ui/card";
 import LocationPickerModal from "./LocationPickerModal";
 import { UserPin } from "@/app/page";
-
-const INITIAL_POSTS = [
-  {
-    id: 1,
-    user: "Alex Rivera",
-    avatar: "AR",
-    image: "/pet1.png",
-    caption: "Meet Cooper! He just had his first vaccination today. Such a brave boy! 🐾 #GoldenRetriever #PuppyLife",
-    likes: 124,
-    time: "2 hours ago",
-    location: "Downtown Clinic"
-  },
-  {
-    id: 2,
-    user: "Sarah Chen",
-    avatar: "SC",
-    image: "/pet2.png",
-    caption: "Mochi found her favorite spot in the house. Who can resist that face? 🐱✨",
-    likes: 89,
-    time: "5 hours ago",
-    location: ""
-  }
-];
+import { supabase } from "@/lib/supabase";
+import PostCard from "./PostCard";
 
 interface HomeFeedProps {
   onAddPin?: (pin: UserPin) => void;
 }
 
 export default function HomeFeed({ onAddPin }: HomeFeedProps) {
-  const [posts, setPosts] = useState(INITIAL_POSTS);
+  const [posts, setPosts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [newPostText, setNewPostText] = useState("");
   const [postLocation, setPostLocation] = useState<{lat: number, lng: number, address: string} | null>(null);
   const [isLocationPickerOpen, setIsLocationPickerOpen] = useState(false);
   const [postImage, setPostImage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const fetchPosts = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('posts')
+        .select(`
+          *,
+          profiles (display_name, avatar_url),
+          comments (
+            id,
+            content,
+            created_at,
+            profiles (display_name, avatar_url)
+          )
+        `)
+        .order('created_at', { ascending: false });
+        
+      if (error) throw error;
+      setPosts(data || []);
+    } catch (error) {
+      console.error("Error fetching posts:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchPosts();
+
+    // Realtime subscription for comments
+    const channel = supabase
+      .channel('realtime-feed')
+      .on('postgres_changes', { 
+          event: '*', 
+          schema: 'public', 
+          table: 'comments' 
+      }, () => {
+        // Refresh posts when comments change to get nested profile data
+        fetchPosts();
+      })
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'posts' 
+    }, () => {
+      fetchPosts();
+    })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, []);
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -49,33 +79,49 @@ export default function HomeFeed({ onAddPin }: HomeFeedProps) {
     }
   };
 
-  const handleUpload = () => {
+  const handleUpload = async () => {
     if (!newPostText) return;
-    const newPost = {
-      id: posts.length + 1,
-      user: "You",
-      avatar: "ME",
-      image: postImage || "/pet1.png", // Use selected image or default
-      caption: newPostText,
-      likes: 0,
-      time: "Just now",
-      location: postLocation ? postLocation.address : ""
-    };
+    
+    try {
+      const { data, error } = await supabase
+        .from('posts')
+        .insert([
+          {
+            caption: newPostText,
+            image_url: postImage || "https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?auto=format&fit=crop&q=80&w=800",
+            location: postLocation ? postLocation.address : null,
+            // likes and mood columns not found in database schema yet
+          }
+        ])
+        .select();
 
-    if (postLocation && onAddPin) {
-      onAddPin({
-        id: `post-${newPost.id}`,
-        lat: postLocation.lat,
-        lng: postLocation.lng,
-        name: `Post by You`,
-        description: newPostText
-      });
+      if (error) throw error;
+
+      if (data && data.length > 0) {
+        if (postLocation && onAddPin) {
+          onAddPin({
+            id: `post-${data[0].id}`,
+            lat: postLocation.lat,
+            lng: postLocation.lng,
+            name: `Post by You`,
+            description: newPostText
+          });
+        }
+        setNewPostText("");
+        setPostLocation(null);
+        setPostImage(null);
+        fetchPosts(); // Refresh feed
+      }
+    } catch (error: any) {
+      console.error("Error creating post:", error);
+      if (error.code === '42501') {
+        alert("Failed to create post: Row-Level Security (RLS) is blocking this request. Please add a policy to allow inserts.");
+      } else if (error.code === 'PGRST204') {
+        alert("Failed to create post: Database schema mismatch. Please ensure 'likes' and 'mood' columns exist.");
+      } else {
+        alert(`Failed to create post: ${error.message || "Unknown error"}`);
+      }
     }
-
-    setPosts([newPost, ...posts]);
-    setNewPostText("");
-    setPostLocation(null);
-    setPostImage(null);
   };
 
   return (
@@ -145,63 +191,22 @@ export default function HomeFeed({ onAddPin }: HomeFeedProps) {
       </Card>
 
       {/* Feed */}
-      <div className="space-y-8">
-        {posts.map((post) => (
-          <Card key={post.id} className="overflow-hidden border-surface-container shadow-level-2">
-            {/* Post Header */}
-            <div className="p-4 flex justify-between items-center">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-secondary/10 flex items-center justify-center text-secondary font-bold text-xs">
-                  {post.avatar}
-                </div>
-                <div>
-                  <p className="text-sm font-bold text-on-surface">{post.user}</p>
-                  <div className="flex items-center gap-2">
-                    <p className="text-[10px] text-on-surface-variant">{post.time}</p>
-                    {post.location && (
-                      <>
-                        <span className="text-[10px] text-on-surface-variant">•</span>
-                        <p className="text-[10px] text-primary flex items-center gap-0.5 font-medium">
-                          <MapPin size={10} /> {post.location}
-                        </p>
-                      </>
-                    )}
-                  </div>
-                </div>
-              </div>
-              <Button variant="ghost" size="icon" className="h-8 w-8">
-                <MoreHorizontal size={18} />
-              </Button>
-            </div>
-
-            {/* Post Image */}
-            <div className="aspect-square relative bg-surface-container-low">
-              <img
-                src={post.image}
-                alt="Pet"
-                className="w-full h-full object-cover"
-              />
-            </div>
-
-            {/* Post Actions */}
-            <div className="p-4">
-              <div className="flex gap-4 mb-3">
-                <Heart size={24} className="text-on-surface-variant hover:text-error cursor-pointer transition-colors" />
-                <MessageCircle size={24} className="text-on-surface-variant hover:text-primary cursor-pointer transition-colors" />
-                <Send size={24} className="text-on-surface-variant hover:text-primary cursor-pointer transition-colors" />
-              </div>
-              
-              <p className="text-sm font-bold text-on-surface mb-1">
-                {post.likes} likes
-              </p>
-              
-              <p className="text-sm text-on-surface leading-relaxed">
-                <span className="font-bold mr-2">{post.user}</span>
-                {post.caption}
-              </p>
-            </div>
-          </Card>
-        ))}
+      <div className="space-y-8 pb-10">
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-20 gap-4 text-on-surface-variant">
+            <Loader2 className="w-8 h-8 animate-spin" />
+            <p className="text-sm font-medium">Fetching the latest pet updates...</p>
+          </div>
+        ) : (
+          posts.map((post) => (
+            <PostCard key={post.id} post={post} />
+          ))
+        )}
+        {!loading && posts.length === 0 && (
+          <div className="text-center py-20 bg-surface-container-low rounded-3xl border border-surface-container">
+            <p className="text-on-surface-variant">No posts yet. Be the first to share your pet!</p>
+          </div>
+        )}
       </div>
 
       <LocationPickerModal
