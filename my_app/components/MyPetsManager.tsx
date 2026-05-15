@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect, useRef } from "react";
-import { Plus, X, Camera, Loader2, Sparkles, PawPrint, Scale, Calendar, Syringe, Soup, Info } from "lucide-react";
+import { Plus, X, Camera, Loader2, Sparkles, PawPrint, Scale, Calendar, Syringe, Soup, Info, Trash } from "lucide-react";
 import { Button } from "./ui/button";
 import { Card } from "./ui/card";
 import { supabase } from "@/lib/supabase";
@@ -121,10 +121,10 @@ export default function MyPetsManager() {
         diet_status: pet.diet_status || "None"
       };
 
-      const response = await fetch('http://localhost:8000/api/generate-pet-insights', {
+      const response = await fetch('/api/gemini', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        body: JSON.stringify({ type: 'pet_profile', payload })
       });
 
       if (!response.ok) {
@@ -282,6 +282,28 @@ export default function MyPetsManager() {
     }
   };
 
+  const handleDeletePet = async (petId: string) => {
+    if (!confirm("Are you sure you want to delete this pet? This action cannot be undone.")) return;
+    try {
+      setLoading(true);
+      const { error } = await supabase
+        .from("my_pets")
+        .delete()
+        .eq("id", petId);
+
+      if (error) throw error;
+      
+      setPets(prev => prev.filter(p => p.id !== petId));
+      setSelectedPet(null);
+      setIsEditing(false);
+    } catch (error: any) {
+      console.error("Error deleting pet:", error);
+      alert("Failed to delete pet: " + error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (loading && !pets.length) {
     return (
       <div className="flex justify-center py-12">
@@ -301,9 +323,23 @@ export default function MyPetsManager() {
             <h3 className="text-xl font-bold text-on-surface">{isEditing ? `Edit ${selectedPet.name}` : selectedPet.name}</h3>
           </div>
           {!isEditing && (
-            <Button variant="outline" size="sm" onClick={() => setIsEditing(true)} className="rounded-full gap-2">
-              Edit Profile
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" onClick={() => setIsEditing(true)} className="rounded-full gap-2">
+                Edit Profile
+              </Button>
+              <Button 
+                variant="outline" 
+                size="icon" 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDeletePet(selectedPet.id);
+                }} 
+                className="rounded-full border-error/50 text-error hover:bg-error/10 hover:border-error"
+                title="Delete Pet"
+              >
+                <Trash size={16} />
+              </Button>
+            </div>
           )}
         </div>
 

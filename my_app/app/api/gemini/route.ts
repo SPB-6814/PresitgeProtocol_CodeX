@@ -62,6 +62,32 @@ Return ONLY a raw JSON object (no markdown formatting, no code blocks) with the 
           ]
         }
       ];
+    } else if (type === 'pet_profile') {
+      const { name, animal_type, breed, age, weight, location, vaccination_status, diet, diet_status } = payload;
+      prompt = `You are an expert veterinary AI. Create a personalized health and grooming plan for this pet based on the profile provided.
+Name: ${name}
+Type: ${animal_type}
+Breed: ${breed}
+Age: ${age}
+Weight: ${weight}kg
+Location: ${location}
+Vaccination Status: ${vaccination_status}
+Diet: ${diet.join(', ')}
+Diet Notes: ${diet_status}
+
+Return ONLY a raw JSON object (no markdown formatting, no code blocks) with the following structure:
+{
+  "health_plan": "A detailed, empathetic general health plan (can use basic HTML tags like <ul>, <li>, <strong> for formatting).",
+  "grooming_plan": "A detailed, practical grooming plan (can use basic HTML tags for formatting)."
+}`;
+
+      contents = [
+        {
+          parts: [
+            { text: prompt }
+          ]
+        }
+      ];
     } else {
       return NextResponse.json({ error: 'Invalid payload type' }, { status: 400 });
     }
