@@ -18,6 +18,7 @@ export interface Pet {
   goal?: number;
   reporterName?: string;
   reportTime?: string;
+  ownerId?: string;
 }
 
 export const PETS_DATA: Pet[] = [

@@ -200,7 +200,7 @@ export default function CreateCommunityPostModal({ isOpen, onClose, onSuccess }:
                     className="w-full bg-surface-container-low border-none rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-primary/20 outline-none"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    required={type !== "treatment"}
+                    required
                   />
                 </div>
               )}
