@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  turbopack: {},
   webpack: (config, context) => {
     if (context.dev) {
       // Use polling to avoid OneDrive infinite file-watching loops
