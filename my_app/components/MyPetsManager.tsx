@@ -20,6 +20,7 @@ interface Pet {
   diet_status: string;
   health_plan: string;
   grooming_plan: string;
+  monthly_schedule?: any;
 }
 
 export default function MyPetsManager() {
@@ -102,6 +103,69 @@ export default function MyPetsManager() {
     setDiet(prev => 
       prev.includes(item) ? prev.filter(i => i !== item) : [...prev, item]
     );
+  };
+
+  const handleGetAIInsights = async (pet: Pet) => {
+    try {
+      setGeneratingPlan(true);
+      
+      const payload = {
+        name: pet.name,
+        animal_type: pet.animal_type,
+        breed: pet.breed || "Unknown",
+        age: pet.age || "Unknown",
+        weight: pet.weight || 0,
+        location: pet.location || "Unknown",
+        vaccination_status: pet.vaccination_status || "Unknown",
+        diet: Array.isArray(pet.diet) ? pet.diet : (typeof pet.diet === 'string' ? (pet.diet as any).split(',') : []),
+        diet_status: pet.diet_status || "None"
+      };
+
+      const response = await fetch('http://localhost:8000/api/generate-pet-insights', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) {
+        const errText = await response.text();
+        console.error("Backend returned:", response.status, errText);
+        throw new Error(`Failed to generate insights: ${errText}`);
+      }
+      
+      const data = await response.json();
+
+      // Update Supabase
+      const { error } = await supabase
+        .from('my_pets')
+        .update({
+          health_plan: data.health_plan,
+          grooming_plan: data.grooming_plan,
+          monthly_schedule: data.monthly_schedule
+        })
+        .eq('id', pet.id);
+
+      if (error) throw error;
+
+      // Update local state
+      const updatedPet = { 
+        ...pet, 
+        health_plan: data.health_plan, 
+        grooming_plan: data.grooming_plan,
+        monthly_schedule: data.monthly_schedule 
+      };
+      
+      setPets(prev => prev.map(p => p.id === pet.id ? updatedPet : p));
+      if (selectedPet && selectedPet.id === pet.id) {
+        setSelectedPet(updatedPet);
+      }
+
+    } catch (error) {
+      console.error("Error generating insights:", error);
+      alert("Failed to generate AI Care Plan. Please try again.");
+    } finally {
+      setGeneratingPlan(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -328,9 +392,18 @@ export default function MyPetsManager() {
                     Refresh
                   </Button>
                 </div>
-                <div className="text-sm text-on-surface-variant prose prose-sm max-h-[300px] overflow-y-auto custom-scrollbar">
+                <div className="text-sm text-on-surface-variant prose prose-sm max-h-[400px] overflow-y-auto custom-scrollbar">
                   {selectedPet.health_plan ? (
-                    <div dangerouslySetInnerHTML={{ __html: selectedPet.health_plan.replace(/\n/g, '<br/>') }} />
+                    <div className="space-y-6">
+                      <div>
+                        <h5 className="font-bold text-on-surface mb-2 border-b border-primary/10 pb-1">General Health Plan</h5>
+                        <div dangerouslySetInnerHTML={{ __html: selectedPet.health_plan.replace(/\n/g, '<br/>') }} />
+                      </div>
+                      <div>
+                        <h5 className="font-bold text-on-surface mb-2 border-b border-primary/10 pb-1">Grooming Plan</h5>
+                        <div dangerouslySetInnerHTML={{ __html: selectedPet.grooming_plan?.replace(/\n/g, '<br/>') }} />
+                      </div>
+                    </div>
                   ) : (
                     <div className="text-center py-8">
                       <Sparkles className="mx-auto mb-2 text-primary/30" size={24} />

@@ -9,9 +9,10 @@ import { supabase } from "@/lib/supabase";
 interface NavigationProps {
   activeTab: string;
   setActiveTab: (tab: string) => void;
+  isNGO?: boolean;
 }
 
-export default function Navigation({ activeTab, setActiveTab }: NavigationProps) {
+export default function Navigation({ activeTab, setActiveTab, isNGO }: NavigationProps) {
   const [user, setUser] = React.useState<any>(null);
   const [profile, setProfile] = React.useState<any>(null);
   const [pets, setPets] = React.useState<any[]>([]);
@@ -75,10 +76,14 @@ export default function Navigation({ activeTab, setActiveTab }: NavigationProps)
     window.location.href = "/";
   };
 
-  const navItems = [
+  const navItems = isNGO ? [
+    { id: "ngo", label: "Home" },
+    { id: "map", label: "Map" }
+  ] : [
     { id: "home", label: "Home" },
     { id: "map", label: "Map" },
     { id: "wellness", label: "Wellness" },
+    { id: "calendar", label: "Calendar" },
     { id: "community", label: "Community" },
     { id: "shop", label: "Shop" },
   ];

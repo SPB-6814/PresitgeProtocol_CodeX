@@ -4,6 +4,7 @@ import Navigation from "@/components/Navigation";
 import HomeFeed from "@/components/HomeFeed";
 import RescueMap from "@/components/RescueMap";
 import WellnessTab from "@/components/WellnessTab";
+import WellnessCalendar from "@/components/WellnessCalendar";
 import HeroSection from "@/components/HeroSection";
 
 import CommunityTab from "@/components/CommunityTab";
@@ -50,6 +51,8 @@ export default function Home() {
         return <RescueMap />;
       case "wellness":
         return <WellnessTab />;
+      case "calendar":
+        return <WellnessCalendar />;
       case "community":
         return <CommunityTab />;
       case "shop":

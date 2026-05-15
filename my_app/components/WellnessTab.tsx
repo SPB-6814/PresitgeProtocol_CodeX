@@ -4,6 +4,7 @@ import { Search, Upload, AlertCircle, CheckCircle2, Info } from "lucide-react";
 import { Button } from "./ui/button";
 import { Card } from "./ui/card";
 import { Input } from "./ui/input";
+import TriageReport from "./TriageReport";
 
 export default function WellnessTab() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -36,24 +37,9 @@ export default function WellnessTab() {
         </p>
       </div>
 
-      {/* Search Section */}
-      <div className="max-w-2xl mx-auto mb-16">
-        <div className="relative">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant" size={20} />
-          <Input
-            placeholder="Search symptoms, nutrition, or behavior..."
-            className="pl-12 h-14 text-lg rounded-2xl border-surface-container shadow-level-1 focus:ring-primary/20"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </div>
-        <div className="flex flex-wrap gap-2 mt-4 justify-center">
-          {["Separation Anxiety", "Optimal Diet", "Vaccination Schedule", "Ticks & Fleas"].map((tag) => (
-            <button key={tag} className="px-4 py-1.5 rounded-full bg-surface-container-low text-on-surface-variant text-sm hover:bg-primary/10 hover:text-primary transition-colors">
-              {tag}
-            </button>
-          ))}
-        </div>
+      {/* AI Symptom Triage */}
+      <div className="max-w-4xl mx-auto mb-16">
+        <TriageReport />
       </div>
 
       <div className="grid md:grid-cols-2 gap-8 items-start">

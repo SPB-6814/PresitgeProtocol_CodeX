@@ -16,7 +16,7 @@ export default function HomeFeed({ onAddPin }: HomeFeedProps) {
   const [posts, setPosts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [newPostText, setNewPostText] = useState("");
-  const [postLocation, setPostLocation] = useState<{lat: number, lng: number, address: string} | null>(null);
+  const [postLocation, setPostLocation] = useState<{ lat: number, lng: number, address: string } | null>(null);
   const [isLocationPickerOpen, setIsLocationPickerOpen] = useState(false);
   const [postImage, setPostImage] = useState<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -39,7 +39,7 @@ export default function HomeFeed({ onAddPin }: HomeFeedProps) {
           )
         `)
         .order('created_at', { ascending: false });
-        
+
       if (error) throw error;
       setPosts(data || []);
     } catch (error) {
@@ -55,21 +55,21 @@ export default function HomeFeed({ onAddPin }: HomeFeedProps) {
     // Realtime subscription for comments
     const channel = supabase
       .channel('realtime-feed')
-      .on('postgres_changes', { 
-          event: '*', 
-          schema: 'public', 
-          table: 'comments' 
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'comments'
       }, () => {
         // Refresh posts when comments change to get nested profile data
         fetchPosts();
       })
-      .on('postgres_changes', { 
-        event: '*', 
-        schema: 'public', 
-        table: 'posts' 
-    }, () => {
-      fetchPosts();
-    })
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'posts'
+      }, () => {
+        fetchPosts();
+      })
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
@@ -87,7 +87,7 @@ export default function HomeFeed({ onAddPin }: HomeFeedProps) {
 
   const handleUpload = async () => {
     if (!newPostText) return;
-    
+
     try {
       setLoading(true);
 
@@ -143,7 +143,7 @@ export default function HomeFeed({ onAddPin }: HomeFeedProps) {
             ])
             .select()
             .single();
-          
+
           if (!strayError) strayAnimalId = strayData.id;
         }
       }
@@ -182,7 +182,7 @@ export default function HomeFeed({ onAddPin }: HomeFeedProps) {
         setPostLocation(null);
         setPostImage(null);
         setImageFile(null);
-        fetchPosts(); 
+        fetchPosts();
       }
     } catch (error: any) {
       console.error("Error creating post:", error);
@@ -212,7 +212,7 @@ export default function HomeFeed({ onAddPin }: HomeFeedProps) {
             {postImage && (
               <div className="mt-2 relative w-24 h-24 rounded-lg overflow-hidden border border-surface-container shadow-sm">
                 <img src={postImage} alt="Preview" className="w-full h-full object-cover" />
-                <button 
+                <button
                   onClick={() => setPostImage(null)}
                   className="absolute top-1 right-1 bg-surface-container-lowest/80 text-on-surface p-1 rounded-full hover:bg-error hover:text-on-error transition-colors backdrop-blur-sm"
                 >
@@ -222,16 +222,16 @@ export default function HomeFeed({ onAddPin }: HomeFeedProps) {
             )}
             <div className="flex justify-between items-center mt-2 pt-2 border-t border-surface-container/50">
               <div className="flex gap-2">
-                <input 
-                  type="file" 
-                  accept="image/*" 
-                  className="hidden" 
-                  ref={fileInputRef} 
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  ref={fileInputRef}
                   onChange={handleImageSelect}
                 />
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
+                <Button
+                  variant="ghost"
+                  size="sm"
                   className="text-on-surface-variant hover:text-primary"
                   onClick={() => fileInputRef.current?.click()}
                 >
@@ -242,9 +242,9 @@ export default function HomeFeed({ onAddPin }: HomeFeedProps) {
                   <Camera size={20} className="mr-2" />
                   Camera
                 </Button>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
+                <Button
+                  variant="ghost"
+                  size="sm"
                   className={`hover:text-primary ${postLocation ? 'text-primary bg-primary/10' : 'text-on-surface-variant'}`}
                   onClick={() => setIsLocationPickerOpen(true)}
                 >
@@ -283,13 +283,13 @@ export default function HomeFeed({ onAddPin }: HomeFeedProps) {
         isOpen={isLocationPickerOpen}
         onClose={() => setIsLocationPickerOpen(false)}
         onConfirm={(lat, lng, address) => {
-          setPostLocation({lat, lng, address});
+          setPostLocation({ lat, lng, address });
         }}
       />
 
-      <AuthModal 
-        isOpen={isAuthModalOpen} 
-        onClose={() => setIsAuthModalOpen(false)} 
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
         onSuccess={() => {
           setIsAuthModalOpen(false);
           // Optional: handleUpload could be called again, but better to let user click post again

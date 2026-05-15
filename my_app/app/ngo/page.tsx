@@ -24,7 +24,7 @@ export default function NGOPage() {
 
   return (
     <main className="min-h-screen bg-background">
-      <Navigation activeTab={activeTab} setActiveTab={setActiveTab} />
+      <Navigation activeTab={activeTab} setActiveTab={setActiveTab} isNGO />
       <div className="max-w-container mx-auto pb-20">
         {renderContent()}
       </div>

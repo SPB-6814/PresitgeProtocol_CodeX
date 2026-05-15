@@ -16,6 +16,7 @@ interface MapEntity {
   image_url?: string;
   lat: number;
   lng: number;
+  post_data?: any;
 }
 
 interface MapEntityDrawerProps {
@@ -28,8 +29,14 @@ export default function MapEntityDrawer({ entity, onClose }: MapEntityDrawerProp
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (entity && entity.type === 'stray') {
-      fetchHistory();
+    if (entity) {
+      if (entity.type === 'stray') {
+        fetchHistory();
+      } else if (entity.type === 'post' && entity.post_data) {
+        setHistory([entity.post_data]);
+      } else {
+        setHistory([]);
+      }
     }
   }, [entity]);
 

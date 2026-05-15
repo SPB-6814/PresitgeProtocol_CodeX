@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { MapContainer, TileLayer, Marker, useMap } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Tooltip, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { supabase } from "@/lib/supabase";
@@ -40,6 +40,7 @@ interface MapEntity {
   animal_type?: string;
   behavior_tags?: string[];
   image_url?: string;
+  location_name?: string;
   lat: number;
   lng: number;
 }
@@ -78,12 +79,34 @@ const getServiceIcon = (type: string) => {
   });
 };
 
+const getPostIcon = () => {
+  const color = "#9333ea"; // Purple for user posts
+  return L.divIcon({
+    className: "custom-div-icon",
+    html: `
+      <div class="marker-container">
+        <div class="marker-icon">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 2C8.13 2 5 5.13 5 9C5 14.25 12 22 12 22C12 22 19 14.25 19 9C19 5.13 15.87 2 12 2ZM12 11.5C10.62 11.5 9.5 10.38 9.5 9C9.5 7.62 10.62 6.5 12 6.5C13.38 6.5 14.5 7.62 14.5 9C14.5 10.38 13.38 11.5 12 11.5Z" fill="${color}" stroke="white" stroke-width="1.5"/>
+          </svg>
+        </div>
+      </div>
+    `,
+    iconSize: [32, 42],
+    iconAnchor: [16, 42],
+  });
+};
+
 export default function MapComponent({ 
   entities = [], 
-  onSelectEntity 
+  onSelectEntity,
+  centerLat = 15.4909,
+  centerLng = 73.8278
 }: { 
   entities?: MapEntity[], 
-  onSelectEntity: (entity: MapEntity) => void 
+  onSelectEntity: (entity: MapEntity) => void,
+  centerLat?: number,
+  centerLng?: number
 }) {
   const [mounted, setMounted] = useState(false);
 
@@ -102,7 +125,7 @@ export default function MapComponent({
 
   return (
     <MapContainer 
-      center={[15.4909, 73.8278]} 
+      center={[centerLat, centerLng]} 
       zoom={11} 
       scrollWheelZoom={true}
       style={{ height: "100%", width: "100%" }}
@@ -117,11 +140,18 @@ export default function MapComponent({
         <Marker 
           key={entity.id} 
           position={[entity.lat, entity.lng]} 
-          icon={entity.type === 'stray' ? getAnimalIcon(entity.animal_type) : getServiceIcon(entity.type)}
+          icon={
+            entity.type === 'stray' ? getAnimalIcon(entity.animal_type) : 
+            entity.type === 'post' ? getPostIcon() : 
+            getServiceIcon(entity.type)
+          }
           eventHandlers={{
             click: () => onSelectEntity(entity)
           }}
         >
+          <Tooltip direction="top" offset={[0, -40]} opacity={1}>
+            <span className="font-bold">{entity.name || entity.location_name || "Location"}</span>
+          </Tooltip>
         </Marker>
       ))}
     </MapContainer>

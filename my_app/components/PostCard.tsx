@@ -24,7 +24,7 @@ interface PostProps {
     image_url: string;
     mood: string;
     gender?: string;
-    location_tag?: string;
+    location?: string;
     created_at: string;
     likes_count: number;
     profiles: Profile;
@@ -142,11 +142,11 @@ export default function PostCard({ post }: PostProps) {
               <p className="text-[10px] text-on-surface-variant">
                 {new Date(post.created_at).toLocaleDateString()}
               </p>
-              {post.location_tag && (
+              {post.location && (
                 <>
                   <span className="text-[10px] text-on-surface-variant">•</span>
                   <p className="text-[10px] text-primary flex items-center gap-0.5 font-medium">
-                    <MapPin size={10} /> {post.location_tag}
+                    <MapPin size={10} /> {post.location}
                   </p>
                 </>
               )}
