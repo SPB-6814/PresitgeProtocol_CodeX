@@ -8,7 +8,6 @@ import WellnessCalendar from "@/components/WellnessCalendar";
 import HeroSection from "@/components/HeroSection";
 
 import CommunityTab from "@/components/CommunityTab";
-import ShopTab from "@/components/ShopTab";
 import AuthModal from "@/components/AuthModal";
 import { supabase } from "@/lib/supabase";
 
@@ -55,8 +54,7 @@ export default function Home() {
         return <WellnessCalendar />;
       case "community":
         return <CommunityTab />;
-      case "shop":
-        return <ShopTab />;
+
       default:
         return <HeroSection />;
     }

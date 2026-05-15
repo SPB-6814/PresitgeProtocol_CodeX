@@ -6,7 +6,7 @@ import { supabase } from "@/lib/supabase";
 
 import MyPetsManager from "./MyPetsManager";
 
-export type ProfileDetailType = "my_pet" | "health_vault" | "calendar" | "finances" | "breeding_requests" | "adoption_requests" | null;
+export type ProfileDetailType = "my_pet" | "health_vault" | "calendar" | "breeding_requests" | "adoption_requests" | null;
 
 interface ProfileDetailModalProps {
   isOpen: boolean;
@@ -114,28 +114,7 @@ export default function ProfileDetailModal({ isOpen, onClose, type }: ProfileDet
             </div>
           </div>
         );
-      case "finances":
-        return (
-          <div className="space-y-4">
-            <h3 className="text-lg font-bold flex items-center gap-2"><CreditCard size={20} className="text-on-surface-variant" /> Order History</h3>
-            <div className="space-y-3">
-              <div className="p-3 border border-surface-container rounded-xl flex justify-between items-center">
-                <div>
-                  <p className="font-bold text-sm">Premium Puppy Kibble</p>
-                  <p className="text-xs text-on-surface-variant">Ordered: May 1, 2026</p>
-                </div>
-                <span className="font-bold text-sm">$45.99</span>
-              </div>
-              <div className="p-3 border border-surface-container rounded-xl flex justify-between items-center">
-                <div>
-                  <p className="font-bold text-sm">Interactive Laser Toy</p>
-                  <p className="text-xs text-on-surface-variant">Ordered: Apr 15, 2026</p>
-                </div>
-                <span className="font-bold text-sm">$15.00</span>
-              </div>
-            </div>
-          </div>
-        );
+
       case "breeding_requests":
       case "adoption_requests":
         return (

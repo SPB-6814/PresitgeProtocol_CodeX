@@ -85,7 +85,6 @@ export default function Navigation({ activeTab, setActiveTab, isNGO }: Navigatio
     { id: "wellness", label: "Wellness" },
     { id: "calendar", label: "Calendar" },
     { id: "community", label: "Community" },
-    { id: "shop", label: "Shop" },
   ];
 
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
@@ -191,13 +190,7 @@ export default function Navigation({ activeTab, setActiveTab, isNGO }: Navigatio
                     Calendar (Schedules)
                   </button>
                   
-                  <button 
-                    onClick={() => openProfileDetail("finances")}
-                    className="w-full text-left px-4 py-2 text-sm text-on-surface hover:bg-surface-container flex items-center gap-3 transition-colors"
-                  >
-                    <CreditCard size={16} className="text-on-surface-variant" />
-                    Finances (Orders)
-                  </button>
+
 
                   <button 
                     onClick={() => openProfileDetail("breeding_requests")}

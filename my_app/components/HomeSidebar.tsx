@@ -72,17 +72,7 @@ export default function HomeSidebar({ setActiveTab }: HomeSidebarProps) {
         </button>
       </Card>
       
-      {/* Shop Promo */}
-      <Card className="p-4 border-surface-container shadow-level-1 bg-gradient-to-br from-surface-container-lowest to-surface-container-low">
-        <h3 className="text-sm font-bold text-on-surface mb-2">PawSense Shop</h3>
-        <p className="text-xs text-on-surface-variant mb-3">Get the best food, medicine, and toys for your pets.</p>
-        <button 
-          onClick={() => setActiveTab("shop")}
-          className="w-full py-2 bg-on-surface text-surface rounded text-xs font-bold hover:bg-on-surface-variant transition-colors"
-        >
-          Shop Now
-        </button>
-      </Card>
+
     </div>
   );
 }
