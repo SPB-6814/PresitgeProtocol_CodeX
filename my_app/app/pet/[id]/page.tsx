@@ -4,7 +4,7 @@ import PetDetail from '@/components/PetDetail';
 import { notFound } from 'next/navigation';
 
 type Props = {
-  params: Promise<{ id: string }> | { id: string }
+  params: Promise<{ id: string }>;
 };
 
 export async function generateMetadata(
