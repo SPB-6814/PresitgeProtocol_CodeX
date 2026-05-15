@@ -29,6 +29,8 @@ export default function Home() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         setIsAuthModalOpen(true);
+      } else if (user.user_metadata?.user_type === "ngo") {
+        window.location.href = "/ngo";
       }
     };
     checkUser();

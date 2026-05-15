@@ -5,9 +5,20 @@ import NGODashboard from "@/components/NGODashboard";
 
 import RescueMap from "@/components/RescueMap";
 import CommunityTab from "@/components/CommunityTab";
+import { supabase } from "@/lib/supabase";
 
 export default function NGOPage() {
   const [activeTab, setActiveTab] = useState("ngo");
+
+  React.useEffect(() => {
+    const checkUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        window.location.href = "/";
+      }
+    };
+    checkUser();
+  }, []);
 
   const renderContent = () => {
     switch (activeTab) {

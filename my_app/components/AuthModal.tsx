@@ -16,6 +16,7 @@ export default function AuthModal({ isOpen, onClose, initialMode = "login", onSu
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
+  const [userType, setUserType] = useState<"general" | "ngo">("general");
   const [error, setError] = useState<string | null>(null);
   
   if (!isOpen) return null;
@@ -33,17 +34,24 @@ export default function AuthModal({ isOpen, onClose, initialMode = "login", onSu
           options: {
             data: {
               full_name: fullName,
+              user_type: userType,
             }
           }
         });
         if (signUpError) throw signUpError;
         alert("Success! Please check your email to confirm your account.");
       } else {
-        const { error: signInError } = await supabase.auth.signInWithPassword({
+        const { data, error: signInError } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
         if (signInError) throw signInError;
+
+        const type = data.user?.user_metadata?.user_type || userType;
+        if (type === "ngo") {
+          window.location.href = "/ngo";
+          return;
+        }
       }
 
       if (onSuccess) onSuccess();
@@ -80,6 +88,23 @@ export default function AuthModal({ isOpen, onClose, initialMode = "login", onSu
               {error}
             </div>
           )}
+
+          <div className="flex bg-surface-container rounded-xl p-1 mb-6">
+            <button
+              type="button"
+              className={`flex-1 py-2 text-sm font-bold rounded-lg transition-colors ${userType === "general" ? "bg-surface-container-lowest text-primary shadow-sm" : "text-on-surface-variant hover:text-on-surface"}`}
+              onClick={() => setUserType("general")}
+            >
+              General User
+            </button>
+            <button
+              type="button"
+              className={`flex-1 py-2 text-sm font-bold rounded-lg transition-colors ${userType === "ngo" ? "bg-surface-container-lowest text-primary shadow-sm" : "text-on-surface-variant hover:text-on-surface"}`}
+              onClick={() => setUserType("ngo")}
+            >
+              NGO
+            </button>
+          </div>
 
           <div className="space-y-4">
             {mode === "signup" && (
