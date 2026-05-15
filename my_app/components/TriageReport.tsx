@@ -14,50 +14,45 @@ export default function TriageReport() {
   const handleTriage = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setResult(null);
 
     try {
-      // Connects to the new FastAPI backend endpoint
-      const response = await fetch('http://localhost:8000/api/assess-symptoms', {
+      const response = await fetch('/api/gemini', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
+          type: 'text',
+          payload: { 
             symptoms, 
-            breed: breed || "Unknown", 
-            age: age || "Unknown",
-            region: region || undefined 
+            breed, 
+            age,
+            region
+          }
         }),
       });
       
+      const data = await response.json();
+
       if (response.ok) {
-        const data = await response.json();
         setResult(data);
       } else {
-        console.error("Backend error, displaying mock LLM data.");
+        console.error("Gemini API error:", data);
         setResult({
             severity: "High",
-            clinical_assessment: "Based on the reported lethargy and vomiting, there is a significant risk of dehydration or a gastrointestinal obstruction. These symptoms warrant prompt veterinary attention.",
-            community_alert: "Several similar cases of gastrointestinal issues have been reported in your area recently, possibly linked to a local dog park.",
-            actionable_steps: [
-                "Remove access to food and water immediately to prevent further vomiting.",
-                "Contact your local emergency veterinary clinic.",
-                "Monitor for any other signs such as diarrhea or pale gums."
-            ]
+            clinical_assessment: "Error: " + (data.error || "Failed to contact AI service."),
+            community_alert: "N/A",
+            actionable_steps: ["Please check your API key and try again."]
         });
       }
     } catch (error) {
       console.error("Triage request failed:", error);
-      // Fallback mock
       setResult({
             severity: "Moderate",
-            clinical_assessment: "The symptoms described require monitoring. While not immediately life-threatening, persistent issues should be evaluated by a professional.",
-            community_alert: "No recent local community trends reported for these symptoms.",
-            actionable_steps: [
-                "Keep the pet rested and comfortable.",
-                "Observe closely for the next 12-24 hours.",
-                "Schedule a non-emergency vet appointment if symptoms persist."
-            ]
+            clinical_assessment: "Network error occurred while contacting AI service.",
+            community_alert: "N/A",
+            actionable_steps: ["Check your internet connection.", "Please try again later."]
       });
     } finally {
       setLoading(false);
