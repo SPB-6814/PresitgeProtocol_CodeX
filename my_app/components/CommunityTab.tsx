@@ -44,6 +44,7 @@ export default function CommunityTab() {
 
       const mappedPets: Pet[] = (data || []).map(p => ({
         id: p.id,
+        ownerId: p.user_id,
         type: p.type as any,
         name: p.name || (p.type === 'stray_report' ? 'Unknown ' + p.breed : 'Pet'),
         petName: p.name,

@@ -101,6 +101,11 @@ export default function Navigation({ activeTab, setActiveTab }: NavigationProps)
     setIsAuthModalOpen(true);
   };
 
+  const [mounted, setMounted] = useState(false);
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
   return (
     <header className="sticky top-0 z-50 w-full bg-surface-container-lowest border-b border-surface-container/50 shadow-level-1/50">
       <div className="max-w-container mx-auto px-margin-mobile md:px-margin-desktop h-16 flex items-center justify-between">
@@ -200,6 +205,16 @@ export default function Navigation({ activeTab, setActiveTab }: NavigationProps)
                     Breeding Requests
                   </button>
 
+                  <button 
+                    onClick={() => openProfileDetail("adoption_requests")}
+                    className="w-full text-left px-4 py-2 text-sm text-on-surface hover:bg-surface-container flex items-center gap-3 transition-colors"
+                  >
+                    <div className="relative">
+                      <PawPrint size={16} className="text-primary" />
+                    </div>
+                    Adoption Requests
+                  </button>
+
                   <div className="border-t border-surface-container/50 mt-1 pt-1">
                     <button 
                       onClick={handleLogout}
@@ -231,17 +246,21 @@ export default function Navigation({ activeTab, setActiveTab }: NavigationProps)
           )}
         </div>
       </div>
-      <AuthModal 
-        isOpen={isAuthModalOpen} 
-        onClose={() => setIsAuthModalOpen(false)} 
-        initialMode={authMode}
-        onSuccess={() => setIsAuthModalOpen(false)}
-      />
-      <ProfileDetailModal
-        isOpen={isDetailModalOpen}
-        onClose={() => setIsDetailModalOpen(false)}
-        type={detailModalType}
-      />
+      {mounted && isAuthModalOpen && (
+        <AuthModal 
+          isOpen={isAuthModalOpen} 
+          onClose={() => setIsAuthModalOpen(false)} 
+          initialMode={authMode}
+          onSuccess={() => setIsAuthModalOpen(false)}
+        />
+      )}
+      {mounted && isDetailModalOpen && (
+        <ProfileDetailModal
+          isOpen={isDetailModalOpen}
+          onClose={() => setIsDetailModalOpen(false)}
+          type={detailModalType}
+        />
+      )}
     </header>
   );
 }
